@@ -52,6 +52,13 @@
   - `results/` - 실험 결과 JSON
 - `.gitignore` - 모델 체크포인트, ONNX 제외
 
+
+## Research Surveys
+
+- [CV/VLM 양자화 논문 서베이 (24편)](docs/quantization_survey_cv.md) — Vision 모델 적용 가능 양자화 기법
+- [양자화 종합 서베이 (92편)](docs/quantization_survey_full.md) — LLM, CV, Diffusion, KV Cache, SSM 전 영역
+- [CV SOTA 현황 (85모델)](docs/cv_sota_survey.md) — Detection, Segmentation, VLM, 생성 모델 등 22개 카테고리
+
 ## Tech Stack
 
 `Python` `PyTorch` `TensorRT` `ONNX` `NVIDIA ModelOpt` `OpenCV` `CUDA`
