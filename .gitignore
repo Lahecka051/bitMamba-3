@@ -1,0 +1,11 @@
+*.onnx
+*.pt
+*.pth
+*.bin
+*.safetensors
+trt_engines/
+ppq/checkpoints/
+__pycache__/
+*.pyc
+.claude/
+node_modules/

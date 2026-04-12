@@ -1,0 +1,255 @@
+{
+  "baseline_ppl": 1.0036,
+  "exp_a_asymmetric": {
+    "ADT8_Ang4": {
+      "adt_bits": 8,
+      "angle_bits": 4,
+      "avg_bits": 6.0,
+      "ppl": 29.333,
+      "drop": 28.3294
+    },
+    "ADT6_Ang4": {
+      "adt_bits": 6,
+      "angle_bits": 4,
+      "avg_bits": 5.0,
+      "ppl": 29.1004,
+      "drop": 28.0968
+    },
+    "ADT4_Ang8": {
+      "adt_bits": 4,
+      "angle_bits": 8,
+      "avg_bits": 6.0,
+      "ppl": 62.9674,
+      "drop": 61.9638
+    },
+    "ADT4_Ang6": {
+      "adt_bits": 4,
+      "angle_bits": 6,
+      "avg_bits": 5.0,
+      "ppl": 61.945,
+      "drop": 60.9414
+    },
+    "ADT6_Ang6": {
+      "adt_bits": 6,
+      "angle_bits": 6,
+      "avg_bits": 6.0,
+      "ppl": 1.0041,
+      "drop": 0.0005
+    },
+    "ADT8_Ang3": {
+      "adt_bits": 8,
+      "angle_bits": 3,
+      "avg_bits": 5.5,
+      "ppl": 4026.0781,
+      "drop": 4025.0745
+    },
+    "ADT6_Ang3": {
+      "adt_bits": 6,
+      "angle_bits": 3,
+      "avg_bits": 4.5,
+      "ppl": 4026.1559,
+      "drop": 4025.1523
+    },
+    "ADT4_Ang4": {
+      "adt_bits": 4,
+      "angle_bits": 4,
+      "avg_bits": 4.0,
+      "ppl": 65.4289,
+      "drop": 64.4253
+    },
+    "ADT5_Ang5": {
+      "adt_bits": 5,
+      "angle_bits": 5,
+      "avg_bits": 5.0,
+      "ppl": 1.06,
+      "drop": 0.0564
+    },
+    "ADT5_Ang4": {
+      "adt_bits": 5,
+      "angle_bits": 4,
+      "avg_bits": 4.5,
+      "ppl": 42.0322,
+      "drop": 41.0286
+    },
+    "ADT4_Ang5": {
+      "adt_bits": 4,
+      "angle_bits": 5,
+      "avg_bits": 4.5,
+      "ppl": 63.7322,
+      "drop": 62.7286
+    }
+  },
+  "exp_b_sensitivity": {
+    "layer_0": {
+      "ppl": 1.0036,
+      "drop": 0.0
+    },
+    "layer_1": {
+      "ppl": 1.0036,
+      "drop": 0.0
+    },
+    "layer_2": {
+      "ppl": 1.0036,
+      "drop": 0.0
+    },
+    "layer_3": {
+      "ppl": 1.0036,
+      "drop": 0.0
+    },
+    "layer_4": {
+      "ppl": 1.0036,
+      "drop": 0.0
+    },
+    "layer_5": {
+      "ppl": 1.0036,
+      "drop": 0.0
+    },
+    "layer_6": {
+      "ppl": 1.0036,
+      "drop": 0.0
+    },
+    "layer_7": {
+      "ppl": 1.0036,
+      "drop": 0.0
+    },
+    "layer_8": {
+      "ppl": 1.0036,
+      "drop": 0.0
+    },
+    "layer_9": {
+      "ppl": 1.0037,
+      "drop": 0.0001
+    },
+    "layer_10": {
+      "ppl": 1.0036,
+      "drop": 0.0
+    },
+    "layer_11": {
+      "ppl": 1.0036,
+      "drop": 0.0
+    },
+    "layer_12": {
+      "ppl": 1.0036,
+      "drop": 0.0
+    },
+    "layer_13": {
+      "ppl": 1.0101,
+      "drop": 0.0065
+    },
+    "layer_14": {
+      "ppl": 428.6757,
+      "drop": 427.6721
+    },
+    "layer_15": {
+      "ppl": 1.0112,
+      "drop": 0.0076
+    },
+    "layer_16": {
+      "ppl": 1.0036,
+      "drop": 0.0
+    },
+    "layer_17": {
+      "ppl": 1.0036,
+      "drop": 0.0
+    },
+    "layer_18": {
+      "ppl": 1.0036,
+      "drop": 0.0
+    },
+    "layer_19": {
+      "ppl": 1.0037,
+      "drop": 0.0001
+    },
+    "ranking": [
+      "layer_14",
+      "layer_15",
+      "layer_13",
+      "layer_9",
+      "layer_19",
+      "layer_0",
+      "layer_1",
+      "layer_2",
+      "layer_3",
+      "layer_4",
+      "layer_5",
+      "layer_6",
+      "layer_7",
+      "layer_8",
+      "layer_10",
+      "layer_11",
+      "layer_12",
+      "layer_16",
+      "layer_17",
+      "layer_18"
+    ]
+  },
+  "exp_c_mixed_precision": {
+    "top2_W8_rest_W4": {
+      "avg_bits": 4.4,
+      "ppl": 1.0065,
+      "drop": 0.0029
+    },
+    "top4_W8_rest_W4": {
+      "avg_bits": 4.8,
+      "ppl": 1.0051,
+      "drop": 0.0015
+    },
+    "top6_W8_rest_W4": {
+      "avg_bits": 5.2,
+      "ppl": 1.0049,
+      "drop": 0.0013
+    },
+    "top8_W8_rest_W4": {
+      "avg_bits": 5.6,
+      "ppl": 1.0049,
+      "drop": 0.0013
+    },
+    "top10_W8_rest_W4": {
+      "avg_bits": 6.0,
+      "ppl": 1.0049,
+      "drop": 0.0013
+    },
+    "top4_W6_rest_W4": {
+      "avg_bits": 4.4,
+      "ppl": 1.0044,
+      "drop": 0.0008
+    },
+    "top8_W6_rest_W4": {
+      "avg_bits": 4.8,
+      "ppl": 1.0043,
+      "drop": 0.0007
+    },
+    "top12_W6_rest_W4": {
+      "avg_bits": 5.2,
+      "ppl": 1.0042,
+      "drop": 0.0006
+    },
+    "top4_W5_rest_W4": {
+      "avg_bits": 4.2,
+      "ppl": 1.055,
+      "drop": 0.0514
+    },
+    "top8_W5_rest_W4": {
+      "avg_bits": 4.4,
+      "ppl": 1.073,
+      "drop": 0.0694
+    },
+    "top12_W5_rest_W4": {
+      "avg_bits": 4.6,
+      "ppl": 1.0733,
+      "drop": 0.0697
+    },
+    "top4_ADT8_Ang4_rest_W4": {
+      "avg_adt_bits": 4.8,
+      "avg_ang_bits": 4.0,
+      "ppl": 1.0045,
+      "drop": 0.0009
+    },
+    "top8_ADT8_Ang4_rest_W4": {
+      "avg_adt_bits": 5.6,
+      "avg_ang_bits": 4.0,
+      "ppl": 1.0042,
+      "drop": 0.0006
+    }
+  }
+}
