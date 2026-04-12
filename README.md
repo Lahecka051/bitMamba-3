@@ -16,7 +16,7 @@
 
 | Period | Experiment | Result |
 |:-------|:-----------|:-------|
-| 03.23 ~ 04.01 | TAQ Pilot (비디오 코덱 I/P-frame 원리 이식) | 아이디어 참신하나 state delta 상관 기준 미달 |
+| 03.23 ~ 04.01 | TAQ Pilot (비디오 코덱 I/P-frame 원리 이식) | state delta 상관 기준 미달 |
 | 04.01 ~ 04.10 | PPQ Phase 1-2 (Mamba-3 극좌표 양자화) | 34회 실험, 극좌표 vs 직교좌표 차이 미미 |
 
 ## Experiment Log (34 commits)
