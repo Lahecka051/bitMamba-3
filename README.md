@@ -52,11 +52,6 @@
   - `results/` - 실험 결과 JSON
 - `.gitignore` - 모델 체크포인트, ONNX 제외
 
-## Related Research
-
-- [연구 계획서 (PPQ Framework)](https://github.com/Lahecka051/ComputerVision) - 20주 계획, Phase 1에서 중단
-- [국방품질연구회 KCI 논문](https://github.com/Lahecka051/Defense_Quality_Research_Council) - ViT 기반 소형 객체 탐지
-
 ## Tech Stack
 
 `Python` `PyTorch` `TensorRT` `ONNX` `NVIDIA ModelOpt` `OpenCV` `CUDA`
