@@ -1,0 +1,13 @@
+model,params_M,dtype,context_L,decode_steps,batch,prefill_tok_per_s,decode_tok_per_s,peak_mem_gb
+state-spaces/mamba2-130m,129.0,bfloat16,512,64,1,23597.07,80.34,0.515
+state-spaces/mamba2-130m,129.0,bfloat16,2048,64,1,88714.81,92.57,0.649
+state-spaces/mamba2-130m,129.0,bfloat16,8192,64,1,285529.32,88.69,1.809
+state-spaces/mamba2-130m,129.0,bfloat16,32768,64,1,401853.34,85.67,6.45
+state-spaces/mamba2-370m,368.3,bfloat16,512,64,1,11782.32,40.46,0.957
+state-spaces/mamba2-370m,368.3,bfloat16,2048,64,1,45787.46,44.53,1.107
+state-spaces/mamba2-370m,368.3,bfloat16,8192,64,1,141264.82,40.12,2.27
+state-spaces/mamba2-370m,368.3,bfloat16,32768,64,1,131159.38,42.59,6.923
+state-spaces/mamba2-1.3b,1343.8,bfloat16,512,64,1,13156.62,45.87,2.817
+state-spaces/mamba2-1.3b,1343.8,bfloat16,2048,64,1,47399.65,44.24,2.985
+state-spaces/mamba2-1.3b,1343.8,bfloat16,8192,64,1,50925.16,44.95,4.16
+state-spaces/mamba2-1.3b,1343.8,bfloat16,32768,64,1,49258.66,41.79,8.86

@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.ipynb_checkpoints/
+
+# Virtual envs
+venv/
+env/
+
+# Data and checkpoints (too large for git)
+data/
+checkpoints/
+third_party/
+results/logs/
+results/**/wandb/
+*.pt
+*.safetensors
+*.bin
+*.npz
+*.parquet
+
+# FPGA / Vivado
+rtl/vivado_project/*/
+!rtl/vivado_project/.gitkeep
+*.jou
+*.log
+*.str
+*.backup*
+.Xil/
+rtl/bd/*.bd.bak
+*.xsa
+
+# Verilator
+sim/verilator/obj_dir/
+
+# PetaLinux images
+petalinux/**/BOOT.BIN
+petalinux/**/image.ub
+petalinux/**/*.elf
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Logs
+*.log
