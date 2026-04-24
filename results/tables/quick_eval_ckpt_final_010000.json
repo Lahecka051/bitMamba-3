@@ -1,0 +1,11 @@
+{
+  "ckpt": "checkpoints/bitmamba3_30M_mimo/ckpt_final_010000.pt",
+  "preset": "30M",
+  "wikitext103_ppl": 552.9868210377308,
+  "wikitext103_tokens": 37542,
+  "generation_samples": [
+    "The quick brown fox of the \"The S.C.\" is a very simple way to make a new way of the world.\nThe first thing to do is",
+    "In the beginning, there was a lot of evidence that the fact that the fact of the fact was not a matter of the fact that the fact was not a matter of the fact",
+    "Machine learning models can be used to make a new way to make a new way of making a new way of a new way.\nThe first step in the first step"
+  ]
+}
