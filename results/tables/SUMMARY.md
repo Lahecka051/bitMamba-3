@@ -31,6 +31,9 @@ Single-block tiny model (d_model=128), 1500 training steps, seqlen=128, batch=32
 | mamba2 | 0.5222 | 0.5156 | 0.5107 | 0.4219 |
 | mamba3_siso | 0.5148 | 0.5000 | 0.5046 | 0.5312 |
 | mamba3_mimo | 0.5266 | 0.5312 | 0.5093 | 0.4688 |
+| mamba3_mimo_bit | 0.5856 | 0.4531 | 0.5409 | 0.5312 |
+| mamba3_siso_bit | 0.8010 | 0.8281 | 0.6650 | 0.4688 |
+| mamba2_bit | 0.5256 | 0.4219 | 0.5112 | 0.5312 |
 
 
 Note: Mamba-3 paper reports 100% parity accuracy at 1.5B scale; our tiny 128-d single-block does not reach that regime.
