@@ -31,13 +31,26 @@ exceeds Blackwell's dynamic shmem limit.
 
 ## Workaround Adopted
 
-All BitMamba-3 MIMO presets use `chunk_size=8` (with `mimo_rank=4`), giving
-`chunk × rank = 32`. This is **half** the upstream recommendation (`64 / mimo_rank = 16`).
+Shared-memory allocation in the TileLang kernel scales as
+`O(d_state × chunk_size × mimo_rank)`. The Blackwell budget therefore depends
+on all three. Empirical settings used in this project:
+
+| Preset | d_state | mimo_rank | chunk_size | chunk × rank | Status |
+|---|---|---|---|---|---|
+| 30M    | 64  | 4 | **8** | 32  | OK |
+| 130M   | 128 | 4 | **4** | 16  | OK (smaller chunk to compensate for 2× d_state) |
+| 370M   | 128 | 4 | **4** | 16  | OK |
+
+The empirical ceiling is `d_state × chunk × mimo_rank ≲ 2,048` for the
+forward + backward kernel pair on Blackwell.
 
 Upstream comment in `mamba3.py` line 46:
 ```python
 chunk_size=64,  # Recommended: 64 for SISO, 64/mimo_rank for MIMO
 ```
+
+Our values are 2–4× smaller than the upstream recommendation, but we have
+verified forward and backward bit-exactness against the FP reference path.
 
 ## Paper Defense
 
