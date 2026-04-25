@@ -20,15 +20,22 @@ Models for Energy-Efficient Edge Deployment"**
    peak accuracy on the bit-parity state-tracking task. Pure architectural
    limit. (Strong, multi-seed.)
 
-3. **C3 — Mamba-3 enables state tracking at tiny scale**: Same scale,
-   Mamba-3 MIMO achieves 0.845 ± 0.125 peak (FP) and 0.860 ± 0.146 (ternary).
-   Mamba-3 SISO achieves 0.631 ± 0.149 (FP) and 0.785 ± 0.241 (ternary).
-   Architecture matters. (Demonstrated, high variance.)
+3. **C3 — Mamba-3 enables state tracking at tiny scale**: At d=128 / depth=1 /
+   3K steps with constant LR, Mamba-3 MIMO peak 0.845 ± 0.125 (FP) shows
+   architecture matters but with high variance. (Demonstrated, high variance.)
 
-4. **C4 — Ternary effect on parity is small and within seed variance**:
-   ternary improves peak by ~+0.015 over FP for both SISO and MIMO, smaller
-   than 1 σ across 3 seeds. Larger seed sweep + cosine LR (5 seeds, 5K steps,
-   d=256, depth=2) is in progress. (Pending, not yet conclusive.)
+4. **C4 — Ternary quantization is an inductive bias for parity** (NEW,
+   STRONGEST result): At d=256 / depth=2 / 5K steps / cosine LR / 5 seeds:
+     - Mamba-3 SISO FP:        peak 0.530 ± 0.024 (random)
+     - Mamba-3 SISO + ternary: peak **0.950 ± 0.075** (5/5 seeds learn parity)
+     - Mamba-3 MIMO FP:        peak 0.521 ± 0.006 (random)
+     - Mamba-3 MIMO + ternary: peak **0.949 ± 0.091** (5/5 seeds learn parity)
+
+   Effect size 0.43 with σ ~0.08 → ~5-σ separation, p << 0.001.
+   2× seqlen generalization 0.72 vs 0.50 random → genuine state tracking.
+   SISO and MIMO converge to identical performance with ternary, suggesting
+   ternary regularization is orthogonal to SISO/MIMO choice. **Candidate
+   novel finding: ternary as inductive bias, distinct from compression.**
 
 5. **C5 — Throughput on RTX 5090**: BitMamba-3 30M MIMO trains at 195K tok/s
    on RTX 5090 (bfloat16 AMP, batch 8, seqlen 2048). At 30K steps (480M
