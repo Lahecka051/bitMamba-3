@@ -59,7 +59,7 @@ PRESETS = {
         n_layer=24,
         d_intermediate=0,
         vocab_size=50280,
-        ssm_cfg=dict(layer="Mamba3", is_mimo=True, mimo_rank=4, d_state=128, headdim=64, chunk_size=4, rope_fraction=0.5),  # chunk_size=4 for Blackwell shmem budget at d_state=128
+        ssm_cfg=dict(layer="Mamba3", is_mimo=True, mimo_rank=4, d_state=64, headdim=64, chunk_size=8, rope_fraction=0.5),  # d_state=64 (vs upstream 128) for Blackwell shmem; chunk>=8 required by TileLang
         rms_norm=True,
         residual_in_fp32=True,
         fused_add_norm=True,
@@ -71,7 +71,7 @@ PRESETS = {
         n_layer=48,
         d_intermediate=0,
         vocab_size=50280,
-        ssm_cfg=dict(layer="Mamba3", is_mimo=True, mimo_rank=4, d_state=128, headdim=64, chunk_size=4, rope_fraction=0.5),  # chunk_size=4 for Blackwell shmem budget at d_state=128
+        ssm_cfg=dict(layer="Mamba3", is_mimo=True, mimo_rank=4, d_state=64, headdim=64, chunk_size=8, rope_fraction=0.5),  # d_state=64 for Blackwell shmem; chunk>=8 required by TileLang
         rms_norm=True,
         residual_in_fp32=True,
         fused_add_norm=True,

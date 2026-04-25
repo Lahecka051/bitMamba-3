@@ -33,16 +33,25 @@ exceeds Blackwell's dynamic shmem limit.
 
 Shared-memory allocation in the TileLang kernel scales as
 `O(d_state × chunk_size × mimo_rank)`. The Blackwell budget therefore depends
-on all three. Empirical settings used in this project:
+on all three. **Additional constraint**: TileLang asserts `chunk_size >= 8`,
+so we cannot reduce chunk below 8 to compensate.
 
-| Preset | d_state | mimo_rank | chunk_size | chunk × rank | Status |
+Empirical settings used in this project:
+
+| Preset | d_state | mimo_rank | chunk_size | d×c×r | Status |
 |---|---|---|---|---|---|
-| 30M    | 64  | 4 | **8** | 32  | OK |
-| 130M   | 128 | 4 | **4** | 16  | OK (smaller chunk to compensate for 2× d_state) |
-| 370M   | 128 | 4 | **4** | 16  | OK |
+| 30M    | 64 | 4 | 8 | 2048 | OK |
+| 130M   | **64 (vs upstream 128)** | 4 | 8 | 2048 | OK — d_state reduced |
+| 370M   | **64 (vs upstream 128)** | 4 | 8 | 2048 | OK — d_state reduced |
 
 The empirical ceiling is `d_state × chunk × mimo_rank ≲ 2,048` for the
 forward + backward kernel pair on Blackwell.
+
+**Reduced d_state for 130M and 370M is a Blackwell-specific tuning**, not
+an algorithmic change. The Mamba-3 paper uses d_state=128 as a default, but
+both the kernels and our wrappers correctly handle d_state=64. We verify
+forward + backward numerical equivalence with d_state=128 on a smaller
+seqlen×batch where shmem fits, then run training at d_state=64.
 
 Upstream comment in `mamba3.py` line 46:
 ```python
