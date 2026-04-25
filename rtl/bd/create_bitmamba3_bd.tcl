@@ -28,8 +28,27 @@ set board_part "digilentinc.com:zybo-z7-20:part0:1.0"
 create_project -force $proj_name $proj_dir -part $part
 set_property board_part $board_part [current_project]
 
-# Add RTL sources
+# Add RTL sources — BitMamba-3-specific cores
 add_files -norecurse -fileset sources_1 [glob -directory $rtl_dir *.v]
+
+# Reuse existing infrastructure from prior attention_engine project on
+# the same Zybo Z7-20 board. AXI HP DMA + AXI Lite CSR are field-validated.
+set existing_dir "[file normalize "[file dirname [info script]]/../../../Xilinx/rtl/cores/attention_engine"]"
+if {[file isdirectory $existing_dir]} {
+    add_files -norecurse -fileset sources_1 \
+        "$existing_dir/axi_hp_dma.sv" \
+        "$existing_dir/axi_lite_csr.sv"
+    puts "Added shared infrastructure from $existing_dir"
+} else {
+    puts "WARNING: shared infrastructure dir $existing_dir not found; falling back to placeholder ports."
+}
+
+# Reuse softmax LUT for Mamba-3 attention internal (if integrated)
+set softmax_dir "[file normalize "[file dirname [info script]]/../../../Xilinx/rtl/cores/softmax"]"
+if {[file isdirectory $softmax_dir]} {
+    add_files -norecurse -fileset sources_1 "$softmax_dir/softmax_lut.sv"
+}
+
 update_compile_order -fileset sources_1
 
 # Create block design
