@@ -50,34 +50,41 @@ def make_parity_batch(batch, seqlen, device):
 class ParityModel(nn.Module):
     """Tiny 2-token embedding + single SSM block + 2-class head."""
 
-    def __init__(self, arch="mamba3_mimo", d_model=128, bitize=False, device="cuda", dtype=torch.bfloat16):
+    def __init__(self, arch="mamba3_mimo", d_model=128, bitize=False, depth=1, device="cuda", dtype=torch.bfloat16):
         super().__init__()
         factory_kwargs = {"device": device, "dtype": dtype}
         self.embed = nn.Embedding(2, d_model, **factory_kwargs)
-        if arch == "mamba3_mimo":
-            self.ssm = Mamba3(d_model=d_model, d_state=64, expand=2, headdim=32, is_mimo=True, mimo_rank=4, chunk_size=8, rope_fraction=0.5, layer_idx=0, **factory_kwargs)
-        elif arch == "mamba3_siso":
-            self.ssm = Mamba3(d_model=d_model, d_state=64, expand=2, headdim=32, is_mimo=False, chunk_size=64, rope_fraction=0.5, layer_idx=0, **factory_kwargs)
-        elif arch == "mamba2":
-            self.ssm = Mamba2(d_model=d_model, d_state=64, expand=2, headdim=32, chunk_size=64, layer_idx=0, **factory_kwargs)
-        else:
-            raise ValueError(f"Unknown arch: {arch}")
+        self.blocks = nn.ModuleList()
+        for li in range(depth):
+            if arch == "mamba3_mimo":
+                blk = Mamba3(d_model=d_model, d_state=64, expand=2, headdim=32, is_mimo=True, mimo_rank=4, chunk_size=8, rope_fraction=0.5, layer_idx=li, **factory_kwargs)
+            elif arch == "mamba3_siso":
+                blk = Mamba3(d_model=d_model, d_state=64, expand=2, headdim=32, is_mimo=False, chunk_size=64, rope_fraction=0.5, layer_idx=li, **factory_kwargs)
+            elif arch == "mamba2":
+                blk = Mamba2(d_model=d_model, d_state=64, expand=2, headdim=32, chunk_size=64, layer_idx=li, **factory_kwargs)
+            else:
+                raise ValueError(f"Unknown arch: {arch}")
+            self.blocks.append(blk)
+        # Backward-compat alias for older code paths that reference self.ssm
+        self.ssm = self.blocks[0]
         self.norm = nn.LayerNorm(d_model, **factory_kwargs)
         self.head = nn.Linear(d_model, 2, **factory_kwargs)
 
         if bitize:
-            # Replace Linear layers inside the SSM block with BitLinear (same strategy as BitMamba3)
-            for m in self.ssm.modules():
-                for attr in ("in_proj", "out_proj"):
-                    lin = getattr(m, attr, None)
-                    if isinstance(lin, nn.Linear) and not isinstance(lin, BitLinear):
-                        new = BitLinear(lin.in_features, lin.out_features, bias=lin.bias is not None,
-                                        device=lin.weight.device, dtype=lin.weight.dtype)
-                        setattr(m, attr, new)
+            # Replace Linear layers inside each SSM block with BitLinear
+            for blk in self.blocks:
+                for m in blk.modules():
+                    for attr in ("in_proj", "out_proj"):
+                        lin = getattr(m, attr, None)
+                        if isinstance(lin, nn.Linear) and not isinstance(lin, BitLinear):
+                            new = BitLinear(lin.in_features, lin.out_features, bias=lin.bias is not None,
+                                            device=lin.weight.device, dtype=lin.weight.dtype)
+                            setattr(m, attr, new)
 
     def forward(self, x):
         h = self.embed(x)
-        h = self.ssm(h)
+        for blk in self.blocks:
+            h = h + blk(h)  # residual
         h = self.norm(h)
         return self.head(h)  # (B, L, 2)
 
@@ -103,17 +110,31 @@ def main():
     ap.add_argument("--batch", type=int, default=32)
     ap.add_argument("--lr", type=float, default=1e-3)
     ap.add_argument("--eval_interval", type=int, default=100)
+    ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--depth", type=int, default=1, help="Number of stacked SSM blocks")
     ap.add_argument("--out_json", default="results/tables/parity_task.json")
     args = ap.parse_args()
+
+    torch.manual_seed(args.seed)
+    import random
+    random.seed(args.seed)
+    np_seed = args.seed
+    try:
+        import numpy as np
+        np.random.seed(np_seed)
+    except Exception:
+        pass
 
     device = "cuda"
     # Build directly at bf16 so that Mamba3's explicitly-fp32 params
     # (B_bias, C_bias, mimo_x/z/o, dt_bias, D) retain fp32 (matching kernel expectations).
-    model = ParityModel(args.arch, d_model=args.d_model, bitize=args.bitize, device=device, dtype=torch.bfloat16)
+    model = ParityModel(args.arch, d_model=args.d_model, bitize=args.bitize, depth=args.depth, device=device, dtype=torch.bfloat16)
     model.train()
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr)
 
-    tag = f"{args.arch}{'_bit' if args.bitize else ''}"
+    tag = f"{args.arch}{'_bit' if args.bitize else ''}_seed{args.seed}_d{args.d_model}"
+    if args.depth > 1:
+        tag += f"_depth{args.depth}"
     print(f"=== Parity task: {tag} | d_model={args.d_model}, seqlen={args.seqlen} ===")
 
     history = []

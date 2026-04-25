@@ -53,12 +53,52 @@ threshold. The surprise is:
 - **2× seqlen generalization is partial** (0.67). True state tracking should
   generalize perfectly to longer sequences; the 0.67 suggests the model
   found a near-but-imperfect XOR encoding.
-- Single run, no seed averaging. Need:
-  1. 3–5 seeds per configuration
-  2. Longer training (≥5,000 steps) with cosine LR decay
-  3. Ablation on sequence length (128, 256, 512) to test generalization
-  4. Ablation on model depth (1, 2, 4 blocks)
-  5. Test at larger d_model (256, 512) to see if FP Mamba-3 also solves it
+
+## Update — Multi-seed Sweep (3 seeds × 6 configs)
+
+After running the same configurations with `seed = 0, 1, 2`, the picture is
+substantially **more nuanced** than the single-seed snapshot suggested:
+
+| Config | Peak acc (mean ± std, n=3) | Final acc (mean ± std) | 2× seqlen acc |
+|---|---|---|---|
+| Mamba-2 FP                              | 0.528 ± 0.006 | 0.519 ± 0.002 | 0.508 ± 0.002 |
+| Mamba-2 + ternary (BitMamba-2)          | 0.530 ± 0.004 | 0.525 ± 0.012 | 0.513 ± 0.004 |
+| Mamba-3 SISO FP                         | 0.631 ± 0.149 | 0.523 ± 0.016 | 0.509 ± 0.002 |
+| Mamba-3 SISO + ternary (BitMamba-3)     | 0.785 ± 0.241 | 0.705 ± 0.257 | 0.596 ± 0.100 |
+| Mamba-3 MIMO FP                         | 0.845 ± 0.125 | 0.648 ± 0.173 | 0.577 ± 0.083 |
+| Mamba-3 MIMO + ternary (BitMamba-3 MIMO)| 0.928 (n=1)   | 0.928 (n=1)   | 0.716 (n=1)   |
+
+Revised interpretation:
+
+1. **Mamba-2 is structurally insufficient** for parity at this scale — both FP
+   and ternary stay at chance. This is the cleanest signal in the table and
+   matches the Mamba-3 paper's claim that Mamba-2 cannot solve state-tracking.
+
+2. **All Mamba-3 variants show some state-tracking capacity** — peak accuracies
+   range from 0.63 to 0.93 across configurations, far above random.
+
+3. **Ternary quantization plausibly helps** but with very high run-to-run
+   variance. The single-seed snapshot we initially observed was at the high
+   end of the distribution for SISO + ternary; subsequent seeds were lower.
+   The MIMO + ternary single-seed result of 0.928 is encouraging but pending
+   confirmation from seeds 1 and 2.
+
+4. **Final-step accuracy lags peak by 10–25 points** in unstable configs,
+   suggesting the model finds parity solutions that it does not retain.
+   Cosine LR decay or early-stopping by validation is likely required.
+
+The headline shifts from "BitMamba-3 SISO uniquely solves parity" to:
+
+> "**Mamba-3's RoPE-based recurrence is necessary** for state tracking at tiny
+> scale (Mamba-2 cannot solve it). Ternary quantization on top of Mamba-3 may
+> further regularize toward crisp parity solutions, but the effect is unstable
+> at d=128 / single-block / 3000 steps and warrants longer training and more
+> seeds before claiming a robust improvement."
+
+Pending experiments:
+- Complete remaining MIMO + ternary seeds (in progress — task `byg8ziq5c`).
+- Re-run the best configs at larger scale (d=256, depth=2, 5,000 steps).
+- Add cosine LR decay to stabilize final-step accuracy.
 
 ## Experimental Files
 
