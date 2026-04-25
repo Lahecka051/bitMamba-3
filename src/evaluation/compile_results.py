@@ -124,6 +124,55 @@ def main():
         out.append(md_table(larger, ["config", "n", "peak", "final", "2x"]))
         out.append("\nMamba-3 + ternary peak ~0.95 vs FP at chance (0.52). ~5-σ separation.\n")
 
+    # lm-eval-harness on trained checkpoints
+    out.append("\n## lm-evaluation-harness Zero-shot (200 samples per task)\n")
+    for ckpt_label, file_glob in [("130M", "lm_eval_ckpt_final_030000.json")]:
+        path = tables_dir / file_glob
+        if not path.exists():
+            continue
+        try:
+            data = json.loads(path.read_text())
+        except Exception:
+            continue
+        out.append(f"\n### {ckpt_label} BitMamba-3 MIMO (480M tokens, fineweb-edu)\n")
+        rows = []
+        for task, scores in data.get("results", {}).items():
+            row = {"task": task}
+            for k, v in scores.items():
+                if k.endswith("_stderr") or k in ("alias",):
+                    continue
+                if isinstance(v, (int, float)):
+                    row[k] = f"{v:.4f}"
+            rows.append(row)
+        if rows:
+            cols = ["task"] + sorted({c for r in rows for c in r if c != "task"})
+            out.append(md_table(rows, cols))
+
+    # needle-in-haystack
+    needle_path = tables_dir / "needle_130M.json"
+    if needle_path.exists():
+        try:
+            n = json.loads(needle_path.read_text())
+            out.append("\n## Needle-in-Haystack 130M (avg log-prob, 3 trials per cell)\n")
+            results = n.get("results", {})
+            depths = sorted({d for L in results.values() for d in L})
+            cols = ["context_L"] + [f"depth_{d}%" for d in depths]
+            rows = []
+            for L in sorted(results.keys(), key=int):
+                row = {"context_L": L}
+                for d in depths:
+                    cell = results[L].get(d) if isinstance(L, str) else results[str(L)].get(d)
+                    if cell is None:
+                        cell = results[str(L)].get(str(d))
+                    if cell:
+                        row[f"depth_{d}%"] = f"{cell['mean_log_prob']:+.2f}"
+                    else:
+                        row[f"depth_{d}%"] = "-"
+                rows.append(row)
+            out.append(md_table(rows, cols))
+        except Exception:
+            pass
+
     if needle:
         out.append("\n## Needle-in-Haystack\n")
         out.append(f"Checkpoint: `{needle.get('ckpt', '(none)')}`\n\n")
