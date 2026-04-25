@@ -42,7 +42,7 @@ def main():
 
     results = simple_evaluate(
         model="bitmamba3",
-        model_args=f"preset={args.preset},ckpt={args.ckpt},tokenizer=EleutherAI/gpt-neox-20b,dtype=bfloat16,batch_size={args.batch_size},max_length=2048",
+        model_args=f"preset={args.preset},ckpt={args.ckpt},tokenizer=EleutherAI/gpt-neox-20b,dtype=bfloat16,max_length=2048",
         tasks=args.tasks,
         num_fewshot=args.num_fewshot,
         batch_size=args.batch_size,
