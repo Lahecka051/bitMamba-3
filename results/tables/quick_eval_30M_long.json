@@ -1,0 +1,11 @@
+{
+  "ckpt": "checkpoints/bitmamba3_30M_mimo_long/ckpt_final_030000.pt",
+  "preset": "30M",
+  "wikitext103_ppl": 400.0207167490058,
+  "wikitext103_tokens": 37542,
+  "generation_samples": [
+    "The quick brown fox, the first of the first of the first two years of the first century, was the first to be a second, and the first to be the",
+    "In the beginning, there was a lot of evidence that the first of the two-year-old men of the United States had been in the United States.\nThe first of",
+    "Machine learning models can be used to determine the risk of the disease.\nThe study is published in the journal Science.\nThe study is published in the journal Science."
+  ]
+}
