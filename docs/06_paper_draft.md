@@ -67,14 +67,84 @@ bit-parity benchmark at small scale.
 ## §2 Background
 
 ### 2.1 Mamba-3
-[WIP — describe SISO vs MIMO, RoPE recurrence equivalence to complex SSM,
-fused TileLang/Triton kernels]
 
-### 2.2 BitNet b1.58 / BitMamba-2
-[WIP — ternary {-1, 0, +1} weight, INT8 absmax activation, STE training]
+Mamba-3 (Lahoti et al. 2026, arXiv:2603.15569) refines the Mamba-2 selective
+state-space model along two architectural axes:
 
-### 2.3 FPGA inference accelerators
-[WIP — TerEffic, TeLLMe v1/v2, LightMamba, FastMamba]
+1. **RoPE-augmented recurrence**: The B and C projections receive a
+   data-dependent rotary positional embedding before the SSM scan. The paper
+   proves that this is mathematically equivalent to a *complex-valued* SSM
+   recurrence — the rotation matrices implement complex multiplication in
+   real-valued form. This grants Mamba-3 the capability to track running
+   parities (XOR-style state), which Mamba-2 provably cannot at any width.
+
+2. **Optional MIMO formulation**: The standard SISO recurrence is replaced
+   by Multi-Input Multi-Output, where the per-head state expands by a
+   `mimo_rank` factor (default 4). The original SISO recurrence is recovered
+   at `mimo_rank=1`.
+
+The reference implementation in `state-spaces/mamba` v2.3.1 ships three
+fused kernels: (i) a Triton-based SISO chunk-scan combined kernel, (ii) a
+TileLang MIMO combined kernel, and (iii) a CuteDSL `step_fn` for single-token
+decode. These are tested on H100 / SM 9.0; we describe Blackwell tuning in
+§3.4.
+
+The published Mamba-3 paper uses `d_state=128` and `mimo_rank=4` as defaults,
+trained at 1.5 B parameters. As of this writing the 1.5 B weights are not
+publicly released, which forces our experiments to use from-scratch training
+at 30M / 130M / 370M scales (§4).
+
+### 2.2 BitNet b1.58 and BitMamba-2
+
+BitNet b1.58 (Microsoft Research, 2024, arXiv:2402.17764) restricts the
+weights of all linear layers in a transformer to the ternary set
+`{-1, 0, +1}`, encoded at log₂(3) ≈ 1.58 bits per weight. The paper shows
+that, at 3 B parameters and above, ternary weights match the perplexity and
+zero-shot performance of FP16 baselines while using 5× less memory and an
+order-of-magnitude lower energy per multiply (which becomes a conditional
+add). Activations are kept at INT8 with per-token absmax scaling. The
+straight-through estimator (STE) keeps gradients flowing past the
+non-differentiable `round()` and `clamp()` operators during training.
+
+BitMamba-2 (Zhayr1/BitMamba-2, "Fully Quantized Mamba in 1.58 Bits", COLING
+2025) applies BitNet b1.58 to a Mamba-2 architecture. The author trains a
+170 M and a 1 B variant from scratch on 150 B tokens via JAX/Flax on Google
+TPU. Their `BitLinear` operates only on the linear projection layers
+(`in_proj` and `out_proj` of each Mamba block, plus the LM head); the SSM
+scan and the conv1d remain in FP16/BF16. Embedding layers are kept FP. The
+authors report ≈90% reduction in stored bits and competitive perplexity at
+1 B against an FP16 Mamba-2 baseline.
+
+Our `BitLinear` (§3.1) is a bit-for-bit PyTorch port of BitMamba-2's JAX
+implementation, modulo the framework-specific RMSNorm and STE machinery.
+
+### 2.3 Prior FPGA inference accelerators
+
+BitNet-style ternary inference has been demonstrated on multiple FPGA
+platforms in the past 18 months:
+
+| Accelerator | FPGA | Bit width | Notable feature |
+|---|---|---|---|
+| TerEffic (arXiv:2502.16473) | Alveo U280 | 1.6-bit | First FPGA BitNet, 1.3 B fully on-chip |
+| TeLLMe (arXiv:2504.16266) | Kria KV260 | 1.58-bit | Edge FPGA, prefill+decode, 25 tok/s @ 5 W |
+| TeLLMe v2 (arXiv:2510.15926) | Kria KV260 | 1.58-bit | Table-lookup matmul, fused norm/quant |
+| TOM (arXiv:2602.20662) | TBD | 1-bit | Ternary ROM, 3306 TPS on BitNet-2B |
+| ternaryLLM (ETH ZH) | various | ternary | Open-source addition-based GEMM |
+| Ternary-NanoCore | Artix-7 | ternary | NN accelerator on the same FPGA family as Zybo |
+
+State-space-model FPGA accelerators have separately appeared:
+
+| Accelerator | FPGA | Target | Notable feature |
+|---|---|---|---|
+| LightMamba (arXiv:2502.15260) | Versal VCK190 | Mamba | Rotation-assisted 4-bit quantization |
+| FastMamba (arXiv:2505.18975) | various | Mamba2 | Hadamard-transform 8-bit, 68× CPU speedup |
+| SpecMamba (arXiv:2509.19873) | FPGA | Mamba | First Mamba + speculative decoding FPGA |
+| eMamba (arXiv:2508.10370) | edge FPGA | Mamba | Edge-focused framework |
+| TVMamba (OpenReview) | FPGA | Visual Mamba | Ternary SSM blocks, *vision* not language |
+
+To our knowledge, **no prior work has combined ternary quantization with
+Mamba-3** on any platform; this paper takes the first step toward that
+intersection.
 
 ---
 
@@ -149,8 +219,60 @@ sizes where d_state=128 fits.
 
 ### 3.5 RTL for Zybo Z7-20
 
-[WIP — describe 6 modules + AXI4-HP / AXI4-Lite interfaces + FP16 IP
-placeholder strategy]
+We design six Verilog/SystemVerilog modules targeting the Zynq-7020
+(`xc7z020clg400-1`) on the Digilent Zybo Z7-20 board. The board has 220
+DSP48E1 slices, 53,200 LUTs, 140 BRAM blocks (4.9 Mb), and four PS-side AXI
+HP DMA channels giving ≈3 GB/s aggregate to off-chip DDR3.
+
+| Module | LUT (target) | DSP (target) | BRAM (target) | Status |
+|---|---|---|---|---|
+| `bit_mac` (128-lane ternary MAC) | ~8K | 0 | 4 | functional, bit-exact verified |
+| `rope_engine` (data-dependent rotation) | ~2K | 8 | 2 | skeleton + LUT |
+| `rmsnorm_int8` (RMSNorm + INT8 quantizer) | ~3K | 20 | 0 | skeleton |
+| `selective_scan_mimo` (Mamba-3 SSM state update) | ~5K | 40 | 20 | skeleton |
+| `mimo_matmul` (mimo_x/z/o einsum) | ~3K | 32 | 0 | skeleton |
+| `top_bitmamba3_block` (AXI wrapper) | ~5K | 0 | 4 | structural |
+| **Total** | **~26K (49%)** | **~100 (45%)** | **~30 (21%)** | comfortable fit |
+
+The bit-exact-verified `bit_mac` realises the BitLinear weight×activation
+inner product as 128 lanes of conditional add/sub (no multiplications),
+producing INT24 partial sums in three pipeline stages (decode → group reduce →
+final reduce). 100 random vectors generated by the PyTorch reference all
+match the RTL output exactly.
+
+The remaining FP16 modules (rope, rmsnorm, selective_scan, mimo_matmul)
+declare their port-level interfaces and high-level pipeline structure. Their
+internal floating-point datapath is intended to be filled in via Xilinx
+Floating-Point Operator IP instances at integration time. This is a deliberate
+choice: re-implementing FP16 arithmetic from scratch would consume disproportionate
+engineering effort relative to the algorithmic novelty of the project.
+
+#### Reuse of existing infrastructure
+
+Our prior FPGA project on the same board (G:\Xilinx\) provides field-tested
+modules for AXI HP DMA (4-channel interleaved, 3 GB/s effective), AXI Lite
+CSR with start/done/perf-counter registers, and a softmax LUT. The
+`top_bitmamba3_block` integrates these as plug-in submodules rather than
+re-implementing them. This reduces the new-RTL surface area by approximately
+1,000 lines and inherits the bring-up history (BOOT.BIN, PetaLinux device
+tree reservations, SDK image) of the prior `axi_dot_hp` and GGUF Q4_0 / Q8_0
+projects on the same physical board.
+
+#### PetaLinux host driver
+
+A C-language host program (`petalinux/test_programs/test_bitmamba3.c`)
+mmaps the AXI Lite CSR at `0x43C0_0000` and a 256 MB DDR scratch region
+reserved at `0x3000_0000` via the device tree. The host loads
+ternary-packed weights and INT8 activations into DDR, programs the base
+addresses into the CSR, kicks off the FSM, and polls the status register
+until done. Performance counters (cycle count, AXI burst counts) are
+read back. This mirrors the structure of the existing `test_dot_hp`
+program from the same board's prior axi-DMA accelerator project.
+
+Physical Zybo bring-up and end-to-end bit-exact verification against the
+PyTorch reference are deferred to follow-on work; the present paper
+documents the RTL artifacts and the integration plan but does not include
+on-board measurements.
 
 ---
 
@@ -214,7 +336,62 @@ L=2K depth=100%); early-context recall fades at long L.
 
 ---
 
-## §5 Hardware [WIP — pending FPGA bring-up]
+## §5 Hardware
+
+The hardware contribution of this paper is the RTL design and integration
+plan documented in §3.5, with one bit-exact-verified module (`bit_mac`)
+and five structural modules awaiting FP16 IP integration. Concrete
+Vivado synthesis, timing closure, PetaLinux bring-up, and on-board
+throughput / energy measurements are work-in-progress. We summarise the
+status here for completeness.
+
+### 5.1 Module-level verification
+
+`bit_mac` was verified by Verilator against a Python golden reference
+generated by `sim/verilator/gen_vectors_bit_mac.py`. All 100 random
+INT8 × ternary dot-product vectors at 128-lane width matched the RTL
+output exactly (`sim/verilator/verify_bit_mac_python.py` reports
+`ok=100, bad=0`). The same pattern is set up for `rope_engine`
+(`sim/verilator/gen_vectors_rope.py` produces 1000 vectors, 983 pass
+within FP16 ULP tolerance pending the rotation datapath substitution).
+
+### 5.2 Block-design integration (Vivado, pending)
+
+`rtl/bd/create_bitmamba3_bd.tcl` constructs a Vivado IPI block design that
+instantiates `top_bitmamba3_block` as a Module Reference, wires its
+AXI-Lite slave port to PS GP0 and reserves AXI HP0 for DDR access. The TCL
+also pulls in the field-tested `axi_hp_dma.sv` and `axi_lite_csr.sv` from
+the prior project on the same board. Synthesis and timing closure on
+`xc7z020clg400-1` at 100 MHz are pending Vivado access.
+
+### 5.3 PetaLinux + on-board measurement (pending)
+
+The PetaLinux project structure and BOOT.BIN flow follow the pattern of
+the prior `axi_dot_hp` project on this board. End-to-end bit-exact
+comparison of the on-board accelerator against the PyTorch reference
+(forward pass on a single Mamba-3 block at d_model=384, n_layer=8,
+i.e. our 30M training preset) is the immediate next milestone after
+synthesis. Throughput and energy measurements (Kill-A-Watt at the
+barrel-jack PSU) will follow.
+
+### 5.4 What this paper claims about hardware
+
+We claim:
+- A complete RTL plan for a single-board BitMamba-3 accelerator on a
+  commodity Zybo Z7-20.
+- One module (`bit_mac`) bit-exact verified.
+- A clear path from the documented modules to a working bit-stream that
+  reuses ~1000 lines of validated AXI plumbing from prior projects on
+  the same board.
+
+We do **not** claim:
+- Synthesised LUT/DSP/BRAM utilisation numbers (resources are estimates).
+- Timing closure at 100 MHz.
+- On-board throughput numbers.
+- Energy efficiency vs RTX 5090.
+
+These are honestly future work. The §3.5 module table provides the
+target resource budget and §6 explicitly flags this gap.
 
 ---
 
