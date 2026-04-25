@@ -100,6 +100,35 @@ Pending experiments:
 - Re-run the best configs at larger scale (d=256, depth=2, 5,000 steps).
 - Add cosine LR decay to stabilize final-step accuracy.
 
+## Final 18-run Result (3 seeds × 6 configs, completed 2026-04-25)
+
+| Config | Peak (mean ± std) | Final (mean ± std) | 2× seqlen | Verdict |
+|---|---|---|---|---|
+| Mamba-2 FP                 | 0.528 ± 0.006 | 0.519 ± 0.002 | 0.508 ± 0.002 | Cannot solve |
+| Mamba-2 + ternary          | 0.530 ± 0.004 | 0.525 ± 0.012 | 0.513 ± 0.004 | Cannot solve |
+| Mamba-3 SISO FP            | 0.631 ± 0.149 | 0.523 ± 0.016 | 0.509 ± 0.002 | Sometimes |
+| Mamba-3 SISO + ternary     | 0.785 ± 0.241 | 0.705 ± 0.257 | 0.596 ± 0.100 | Often |
+| **Mamba-3 MIMO FP**        | **0.845 ± 0.125** | 0.648 ± 0.173 | 0.577 ± 0.083 | **Most reliable** |
+| **Mamba-3 MIMO + ternary** | **0.860 ± 0.146** | 0.654 ± 0.239 | 0.580 ± 0.118 | **Highest peak** |
+
+Final headline:
+
+> "**Mamba-2 cannot solve parity at any seed at the d=128 / single-block scale**
+> (3 seeds, σ < 0.01). **Mamba-3 (any variant) escapes chance**, with MIMO most
+> reliable across seeds. Ternary quantization provides a small numerical bump
+> (peak ~+0.015 across SISO and MIMO) that is within 1 σ of the seed-to-seed
+> variance and therefore not statistically conclusive at this run count.
+> Stronger claims require 5+ seeds and cosine-LR-stabilized training."
+
+This **partly retracts** the earlier single-seed claim that BitMamba-3 SISO
+*uniquely* solved parity. The corrected story is:
+
+1. (Confirmed) Mamba-2 cannot solve state-tracking at this tiny scale.
+2. (Confirmed) Mamba-3's RoPE-based recurrence is sufficient.
+3. (Plausible, not confirmed) Ternary on top of Mamba-3 helps but within noise.
+4. The 99% peak we initially saw on the BitMamba-3 SISO single seed was a
+   high-variance event, not a deterministic capability.
+
 ## Experimental Files
 
 Logs and JSON in:
