@@ -1,0 +1,11 @@
+{
+  "ckpt": "checkpoints/bitmamba3_130M_mimo/ckpt_final_030000.pt",
+  "preset": "130M",
+  "wikitext103_ppl": 69.37567731999262,
+  "wikitext103_tokens": 37542,
+  "generation_samples": [
+    "The quick brown fox is a common sight in the wild. It is a common sight in the wild, but it is also common in the wild.\nThe wild is",
+    "In the beginning, there was a great deal of confusion and confusion. The first two were the most important. The second was the most important. The first was the most important.",
+    "Machine learning models can be used to help students learn to read and write.\n- Students can use the Internet to learn about the world around them.\n- Students can"
+  ]
+}
