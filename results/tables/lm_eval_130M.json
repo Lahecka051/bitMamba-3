@@ -1,6 +1,6 @@
 {
-  "ckpt": "checkpoints/bitmamba3_370M_mimo/ckpt_final_030000.pt",
-  "preset": "370M",
+  "ckpt": "checkpoints/bitmamba3_130M_mimo/ckpt_final_030000.pt",
+  "preset": "130M",
   "tasks": [
     "lambada_openai",
     "hellaswag",
@@ -12,28 +12,28 @@
     "arc_easy": {
       "alias": "arc_easy",
       "acc,none": 0.41,
-      "acc_stderr,none": 0.03486513859784927,
-      "acc_norm,none": 0.38,
-      "acc_norm_stderr,none": 0.034408132730358185
+      "acc_stderr,none": 0.034865138597849274,
+      "acc_norm,none": 0.365,
+      "acc_norm_stderr,none": 0.03412767927155776
     },
     "hellaswag": {
       "alias": "hellaswag",
-      "acc,none": 0.36,
-      "acc_stderr,none": 0.03402629784040015,
+      "acc,none": 0.355,
+      "acc_stderr,none": 0.033920910080708536,
       "acc_norm,none": 0.39,
       "acc_norm_stderr,none": 0.03457567623250011
     },
     "lambada_openai": {
       "alias": "lambada_openai",
-      "perplexity,none": 826.5462374504543,
-      "perplexity_stderr,none": 220.02068697391317,
-      "acc,none": 0.12,
-      "acc_stderr,none": 0.023035912535249326
+      "perplexity,none": 1355.2327850252773,
+      "perplexity_stderr,none": 368.92421288186546,
+      "acc,none": 0.1,
+      "acc_stderr,none": 0.02126643615025009
     },
     "piqa": {
       "alias": "piqa",
-      "acc,none": 0.555,
-      "acc_stderr,none": 0.0352289710609046,
+      "acc,none": 0.57,
+      "acc_stderr,none": 0.03509498954918328,
       "acc_norm,none": 0.555,
       "acc_norm_stderr,none": 0.03522897106090459
     }
@@ -88,8 +88,8 @@
       "doc_to_decontamination_query": "Question: {{question}}\nAnswer:",
       "metadata": {
         "version": 1.0,
-        "preset": "370M",
-        "ckpt": "checkpoints/bitmamba3_370M_mimo/ckpt_final_030000.pt",
+        "preset": "130M",
+        "ckpt": "checkpoints/bitmamba3_130M_mimo/ckpt_final_030000.pt",
         "tokenizer": "EleutherAI/gpt-neox-20b",
         "dtype": "bfloat16",
         "max_length": 2048
@@ -114,7 +114,7 @@
       "fewshot_config": {
         "sampler": "default",
         "split": null,
-        "process_docs": "<function process_docs at 0x7f47c0a78a40>",
+        "process_docs": "<function process_docs at 0x76a718be1440>",
         "fewshot_indices": null,
         "samples": null,
         "doc_to_text": "{{query}}",
@@ -142,8 +142,8 @@
       "should_decontaminate": false,
       "metadata": {
         "version": 1.0,
-        "preset": "370M",
-        "ckpt": "checkpoints/bitmamba3_370M_mimo/ckpt_final_030000.pt",
+        "preset": "130M",
+        "ckpt": "checkpoints/bitmamba3_130M_mimo/ckpt_final_030000.pt",
         "tokenizer": "EleutherAI/gpt-neox-20b",
         "dtype": "bfloat16",
         "max_length": 2048
@@ -195,8 +195,8 @@
       "doc_to_decontamination_query": "{{text}}",
       "metadata": {
         "version": 1.0,
-        "preset": "370M",
-        "ckpt": "checkpoints/bitmamba3_370M_mimo/ckpt_final_030000.pt",
+        "preset": "130M",
+        "ckpt": "checkpoints/bitmamba3_130M_mimo/ckpt_final_030000.pt",
         "tokenizer": "EleutherAI/gpt-neox-20b",
         "dtype": "bfloat16",
         "max_length": 2048
@@ -246,8 +246,8 @@
       "doc_to_decontamination_query": "goal",
       "metadata": {
         "version": 1.0,
-        "preset": "370M",
-        "ckpt": "checkpoints/bitmamba3_370M_mimo/ckpt_final_030000.pt",
+        "preset": "130M",
+        "ckpt": "checkpoints/bitmamba3_130M_mimo/ckpt_final_030000.pt",
         "tokenizer": "EleutherAI/gpt-neox-20b",
         "dtype": "bfloat16",
         "max_length": 2048

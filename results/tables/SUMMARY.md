@@ -73,6 +73,25 @@ Mamba-3 + ternary peak ~0.95 vs FP at chance (0.52). ~5-σ separation.
 | piqa | 0.5700 | 0.5550 | 0.0352 | 0.0351 |  |  |
 
 
+### 370M BitMamba-3 MIMO (480M tokens, fineweb-edu)
+
+| task | acc,none | acc_norm,none | acc_norm_stderr,none | acc_stderr,none | perplexity,none | perplexity_stderr,none |
+|---|---|---|---|---|---|---|
+| arc_easy | 0.4100 | 0.3800 | 0.0344 | 0.0349 |  |  |
+| hellaswag | 0.3600 | 0.3900 | 0.0346 | 0.0340 |  |  |
+| lambada_openai | 0.1200 |  |  | 0.0230 | 826.5462 | 220.0207 |
+| piqa | 0.5550 | 0.5550 | 0.0352 | 0.0352 |  |  |
+
+
+## Needle-in-Haystack 370M (avg log-prob, 3 trials per cell)
+
+| context_L | depth_0% | depth_50% | depth_100% |
+|---|---|---|---|
+| 512 | -7.40 | -6.18 | -3.54 |
+| 2048 | -8.68 | -8.64 | -5.76 |
+| 4096 | -8.85 | -8.25 | -5.17 |
+
+
 ## Needle-in-Haystack 130M (avg log-prob, 3 trials per cell)
 
 | context_L | depth_0% | depth_100% | depth_50% |

@@ -34,7 +34,11 @@ def main():
     ap.add_argument("--out_json", default=None)
     args = ap.parse_args()
 
-    out_path = Path(args.out_json) if args.out_json else _root / f"results/tables/lm_eval_{Path(args.ckpt).stem}.json"
+    # Default name: lm_eval_<preset>_<ckpt_stem>.json so different presets don't collide
+    if args.out_json:
+        out_path = Path(args.out_json)
+    else:
+        out_path = _root / f"results/tables/lm_eval_{args.preset}_{Path(args.ckpt).stem}.json"
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     print(f"Running lm-eval on {args.ckpt} (preset={args.preset})")

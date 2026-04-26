@@ -126,7 +126,8 @@ def main():
 
     # lm-eval-harness on trained checkpoints
     out.append("\n## lm-evaluation-harness Zero-shot (200 samples per task)\n")
-    for ckpt_label, file_glob in [("130M", "lm_eval_ckpt_final_030000.json")]:
+    for ckpt_label, file_glob in [("130M", "lm_eval_130M.json"),
+                                   ("370M", "lm_eval_370M.json")]:
         path = tables_dir / file_glob
         if not path.exists():
             continue
@@ -147,6 +148,29 @@ def main():
         if rows:
             cols = ["task"] + sorted({c for r in rows for c in r if c != "task"})
             out.append(md_table(rows, cols))
+
+    # Needle-in-haystack: include 370M too if present
+    needle_path_370 = tables_dir / "needle_370M.json"
+    if needle_path_370.exists():
+        try:
+            n = json.loads(needle_path_370.read_text())
+            out.append("\n## Needle-in-Haystack 370M (avg log-prob, 3 trials per cell)\n")
+            results = n.get("results", {})
+            depths = sorted({int(d) for L in results.values() for d in L})
+            cols = ["context_L"] + [f"depth_{d}%" for d in depths]
+            rows = []
+            for L in sorted(results.keys(), key=int):
+                row = {"context_L": L}
+                for d in depths:
+                    cell = results[str(L)].get(str(d)) if isinstance(L, str) else results[L].get(d)
+                    if cell:
+                        row[f"depth_{d}%"] = f"{cell['mean_log_prob']:+.2f}"
+                    else:
+                        row[f"depth_{d}%"] = "-"
+                rows.append(row)
+            out.append(md_table(rows, cols))
+        except Exception:
+            pass
 
     # needle-in-haystack
     needle_path = tables_dir / "needle_130M.json"
