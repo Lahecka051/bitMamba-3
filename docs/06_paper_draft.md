@@ -297,10 +297,18 @@ Decode rate is ~constant in context length (Mamba's O(1) state advantage).
 
 | Run         | Params | Tokens | Steps | Loss  | WikiText PPL |
 |------------|--------|--------|-------|-------|--------------|
-| 30M short  | 27M    | 164M   | 10K   | 5.0   | 553          |
-| 30M long   | 27M    | 480M   | 30K   | 4.9   | 400          |
-| 130M       | 135M   | 480M   | 30K   | 3.57  | **69.4**     |
-| 370M (TBD) | 386M   | 480M   | 30K   | TBD   | TBD          |
+| 30M short  | 27M    | 164M   | 10K   | 5.00  | 553          |
+| 30M long   | 27M    | 480M   | 30K   | 4.90  | 400          |
+| 130M       | 135M   | 480M   | 30K   | 3.57  | 69.4         |
+| **370M**   | **386M** | **480M** | **30K** | **3.33** | **60.2** |
+
+The 30M → 130M jump (4.6× params, same tokens) yields a 5.8× PPL improvement
+(400 → 69.4). The 130M → 370M jump (2.9× params, same tokens) yields only a
+13% PPL improvement (69.4 → 60.2). This pattern of diminishing returns is
+consistent with the Chinchilla compute-optimal regime: 480M tokens is roughly
+optimal for the 130M scale, making 370M training-data-bound at this token
+budget. With more tokens (10–20 B per Chinchilla recommendations), 370M would
+be expected to overtake 130M by a larger margin.
 
 ### 4.4 Parity (state-tracking) — main result
 

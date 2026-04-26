@@ -1,0 +1,11 @@
+{
+  "ckpt": "checkpoints/bitmamba3_370M_mimo/ckpt_final_030000.pt",
+  "preset": "370M",
+  "wikitext103_ppl": 60.22375802934018,
+  "wikitext103_tokens": 37542,
+  "generation_samples": [
+    "The quick brown fox, the black fox, the black fox, the black fox, the black fox, the black fox, the black fox, the black fox, the",
+    "In the beginning, there was a great deal of confusion about the meaning of the word \"soul.\" The word \"soul\" was used in the Old Testament to mean \"",
+    "Machine learning models can be used to help students learn to use the Internet.\n- The Internet is a great tool for learning.\n- The Internet is a great tool"
+  ]
+}

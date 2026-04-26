@@ -107,6 +107,7 @@ def fig3_scaling_curves():
         ("30M @ 164M tok", "quick_eval_ckpt_final_010000.json"),
         ("30M @ 480M tok", "quick_eval_30M_long.json"),
         ("130M @ 480M tok", "quick_eval_130M.json"),
+        ("370M @ 480M tok", "quick_eval_370M.json"),
     ]:
         p = _tables / file
         if p.exists():
