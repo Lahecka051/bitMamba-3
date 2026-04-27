@@ -18,12 +18,13 @@ import torch.nn.functional as F
 
 _root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_root / "src"))
+sys.path.insert(0, str(_root / "scripts"))
 sys.path.insert(0, str(_root / "third_party" / "state-spaces-mamba"))
 
 from bitmamba3 import ensure_mamba3_registered  # noqa: E402
 ensure_mamba3_registered()
 
-from scripts.run_parity_larger_bg import run_one  # type: ignore  # noqa: E402
+from run_parity_larger_bg import run_one  # type: ignore  # noqa: E402
 
 
 def main():
