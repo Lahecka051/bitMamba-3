@@ -1,0 +1,11 @@
+{
+  "ckpt": "checkpoints/bitmamba2_130M/ckpt_final_030000.pt",
+  "preset": "130M_mamba2",
+  "wikitext103_ppl": 113.94281985079641,
+  "wikitext103_tokens": 37542,
+  "generation_samples": [
+    "The quick brown fox is a small, black-eyed, and is usually found in the woods, but it is also found in the woods, and in the woods.",
+    "In the beginning, there was a great deal of debate about the nature of the universe. The universe was a very small place, and the universe was not a single object. It",
+    "Machine learning models can be used to help students learn to think and write.\n- Students can use the Internet to learn about the world around them.\n- Students can"
+  ]
+}
