@@ -1,0 +1,6 @@
+{
+  "model": "state-spaces/mamba2-130m",
+  "params_M": 129.0,
+  "wikitext103_ppl": 19.65234751351681,
+  "wikitext103_tokens": 37542
+}

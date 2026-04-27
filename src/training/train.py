@@ -78,6 +78,19 @@ PRESETS = {
         pad_vocab_size_multiple=8,
         tie_embeddings=True,
     ),
+    # BitMamba-2 (Mamba-2 + ternary) for direct architectural comparison vs BitMamba-3
+    "130M_mamba2": dict(
+        d_model=768,
+        n_layer=24,
+        d_intermediate=0,
+        vocab_size=50280,
+        ssm_cfg=dict(layer="Mamba2", d_state=128, headdim=64, chunk_size=256),  # standard Mamba-2 defaults
+        rms_norm=True,
+        residual_in_fp32=True,
+        fused_add_norm=True,
+        pad_vocab_size_multiple=8,
+        tie_embeddings=True,
+    ),
 }
 
 
