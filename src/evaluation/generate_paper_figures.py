@@ -253,6 +253,73 @@ def fig6_parity_scaling_progression():
     _save(fig, "fig6_parity_scaling_progression")
 
 
+def fig8_quant_cost_decomposition():
+    """Architecture x quantization 2x2 decomposition at 130M, 480M tokens."""
+    cells = {}
+    files = {
+        ("Mamba-3", "ternary"): _tables / "quick_eval_130M.json",
+        ("Mamba-3", "FP"): _tables / "quick_eval_mamba3_130M_fp.json",
+        ("Mamba-2", "ternary"): _tables / "quick_eval_bitmamba2_130M.json",
+        # Mamba-2 FP at 480M tokens not trained; use HF 300B baseline for reference
+    }
+    for (arch, quant), path in files.items():
+        if path.exists():
+            data = json.loads(path.read_text())
+            cells[(arch, quant)] = data.get("wikitext103_ppl")
+
+    # Add HF Mamba-2 baseline as reference (different training scale)
+    hf_path = _tables / "baseline_state-spaces_mamba2-130m_wikitext.json"
+    hf_ppl = None
+    if hf_path.exists():
+        hf_ppl = json.loads(hf_path.read_text()).get("wikitext103_ppl")
+
+    fig, ax = plt.subplots(figsize=(7.5, 4.5))
+
+    archs = ["Mamba-2", "Mamba-3"]
+    quants = ["ternary", "FP"]
+    width = 0.35
+    x = np.arange(len(archs))
+
+    ternary_ppls = [cells.get((a, "ternary")) for a in archs]
+    fp_ppls = [cells.get((a, "FP")) for a in archs]
+
+    for i, ppl in enumerate(ternary_ppls):
+        if ppl is None: ternary_ppls[i] = 0
+    for i, ppl in enumerate(fp_ppls):
+        if ppl is None: fp_ppls[i] = 0
+
+    b1 = ax.bar(x - width / 2, ternary_ppls, width, label="ternary",
+                color=["#999", "#ff7f0e"], edgecolor="black")
+    b2 = ax.bar(x + width / 2, fp_ppls, width, label="FP", hatch="//",
+                color=["#bbb", "#ffaa55"], edgecolor="black")
+
+    for bar, ppl in zip(b1, ternary_ppls):
+        if ppl > 0:
+            ax.annotate(f"{ppl:.1f}", (bar.get_x() + bar.get_width() / 2, ppl),
+                        ha="center", va="bottom", fontsize=9)
+    for bar, ppl in zip(b2, fp_ppls):
+        if ppl > 0:
+            ax.annotate(f"{ppl:.1f}", (bar.get_x() + bar.get_width() / 2, ppl),
+                        ha="center", va="bottom", fontsize=9)
+        else:
+            ax.annotate("(not run)", (bar.get_x() + bar.get_width() / 2, 5),
+                        ha="center", va="bottom", fontsize=8, style="italic")
+
+    if hf_ppl:
+        ax.axhline(hf_ppl, color="green", linestyle=":", alpha=0.7,
+                   label=f"Mamba-2 130M FP @ 300B tokens (PPL {hf_ppl:.1f}, reference)")
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(archs)
+    ax.set_ylabel("WikiText-103 PPL (lower = better)")
+    ax.set_title("Fig 8. Architecture × Quantization decomposition at 130M / 480M tokens\n"
+                 f"M2→M3 (ternary): {(cells[('Mamba-2','ternary')]/cells[('Mamba-3','ternary')]):.2f}× advantage  |  "
+                 f"FP→ternary (M3): +{(cells[('Mamba-3','ternary')]/cells[('Mamba-3','FP')]-1)*100:.1f}% PPL cost")
+    ax.legend(fontsize=8, loc="upper right")
+    ax.grid(axis="y", alpha=0.3)
+    _save(fig, "fig8_quant_cost_decomposition")
+
+
 def fig7_bitmamba2_vs_bitmamba3():
     """BitMamba-2 vs BitMamba-3 130M comparison across metrics."""
     files = {
@@ -354,6 +421,10 @@ def main():
         fig7_bitmamba2_vs_bitmamba3()
     except Exception as e:
         print(f"  Fig 7 failed: {e}")
+    try:
+        fig8_quant_cost_decomposition()
+    except Exception as e:
+        print(f"  Fig 8 failed: {e}")
     print(f"\nDone. Figures in {_figs}")
 
 
