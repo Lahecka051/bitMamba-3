@@ -201,6 +201,129 @@ def fig5_parity_curves():
     _save(fig, "fig5_parity_curves")
 
 
+def fig6_parity_scaling_progression():
+    """d=128 / d=256 / d=512 progression of MIMO+ternary effect."""
+    sweeps = [
+        ("d=128, depth=1", _tables / "parity_multiseed.json"),
+        ("d=256, depth=2", _tables / "parity_larger.json"),
+        ("d=512, depth=4", _tables / "parity_d512.json"),
+    ]
+    configs = ["mamba3_mimo", "mamba3_mimo_bit", "mamba3_siso", "mamba3_siso_bit"]
+    labels = ["MIMO FP", "MIMO + ternary", "SISO FP", "SISO + ternary"]
+    colors = ["#aaa", "#ff7f0e", "#888", "#1f77b4"]
+
+    means = {c: [] for c in configs}
+    stds = {c: [] for c in configs}
+
+    for sweep_label, path in sweeps:
+        if not path.exists():
+            for c in configs:
+                means[c].append(np.nan)
+                stds[c].append(np.nan)
+            continue
+        runs = json.loads(path.read_text())
+        by = {}
+        for r in runs:
+            key = f"{r['arch']}{'_bit' if r.get('bitize') else ''}"
+            by.setdefault(key, []).append(r["peak_acc_all"])
+        for c in configs:
+            vals = by.get(c, [])
+            if vals:
+                means[c].append(float(np.mean(vals)))
+                stds[c].append(float(np.std(vals, ddof=1)) if len(vals) > 1 else 0.0)
+            else:
+                means[c].append(np.nan)
+                stds[c].append(np.nan)
+
+    fig, ax = plt.subplots(figsize=(8, 4.5))
+    x = np.arange(len(sweeps))
+    width = 0.2
+    for i, (c, label, color) in enumerate(zip(configs, labels, colors)):
+        ax.bar(x + (i - 1.5) * width, means[c], width, yerr=stds[c],
+               capsize=4, label=label, color=color, edgecolor="black")
+
+    ax.set_xticks(x)
+    ax.set_xticklabels([s[0] for s in sweeps])
+    ax.axhline(0.5, color="red", linestyle="--", alpha=0.5, label="random")
+    ax.set_ylabel("Peak parity accuracy (5 seeds, μ±σ)")
+    ax.set_title("Fig 6. Inductive-bias effect strengthens with scale\n(d=128/256/512 — MIMO+ternary reaches 13σ at d=512)")
+    ax.set_ylim(0.4, 1.05)
+    ax.legend(loc="lower right", fontsize=8)
+    ax.grid(axis="y", alpha=0.3)
+    _save(fig, "fig6_parity_scaling_progression")
+
+
+def fig7_bitmamba2_vs_bitmamba3():
+    """BitMamba-2 vs BitMamba-3 130M comparison across metrics."""
+    files = {
+        "BitMamba-2": _tables / "lm_eval_130M_mamba2_ckpt_final_030000.json",
+        "BitMamba-3": _tables / "lm_eval_130M.json",
+    }
+    quick = {
+        "BitMamba-2": _tables / "quick_eval_bitmamba2_130M.json",
+        "BitMamba-3": _tables / "quick_eval_130M.json",
+    }
+    for label, p in {**files, **quick}.items():
+        if not p.exists():
+            print(f"  fig7 missing: {p}")
+            return
+
+    bm2_le = json.loads(files["BitMamba-2"].read_text()).get("results", {})
+    bm3_le = json.loads(files["BitMamba-3"].read_text()).get("results", {})
+    bm2_qe = json.loads(quick["BitMamba-2"].read_text())
+    bm3_qe = json.loads(quick["BitMamba-3"].read_text())
+
+    metrics = [
+        ("WikiText PPL", bm2_qe["wikitext103_ppl"], bm3_qe["wikitext103_ppl"], True),  # lower better
+        ("LAMBADA PPL", bm2_le["lambada_openai"]["perplexity,none"], bm3_le["lambada_openai"]["perplexity,none"], True),
+        ("LAMBADA acc", bm2_le["lambada_openai"]["acc,none"], bm3_le["lambada_openai"]["acc,none"], False),
+        ("HellaSwag norm", bm2_le["hellaswag"]["acc_norm,none"], bm3_le["hellaswag"]["acc_norm,none"], False),
+        ("ARC-Easy acc", bm2_le["arc_easy"]["acc,none"], bm3_le["arc_easy"]["acc,none"], False),
+        ("PIQA acc", bm2_le["piqa"]["acc,none"], bm3_le["piqa"]["acc,none"], False),
+    ]
+
+    fig, axes = plt.subplots(1, 2, figsize=(11, 4))
+    # Left: PPLs (log scale, lower is better)
+    ppl_metrics = [m for m in metrics if m[3]]
+    other_metrics = [m for m in metrics if not m[3]]
+
+    x = np.arange(len(ppl_metrics))
+    w = 0.35
+    axes[0].bar(x - w / 2, [m[1] for m in ppl_metrics], w, label="BitMamba-2 (Mamba-2 + ternary)", color="#888")
+    axes[0].bar(x + w / 2, [m[2] for m in ppl_metrics], w, label="BitMamba-3 (Mamba-3 + ternary)", color="#ff7f0e")
+    for i, (label, m2, m3, _) in enumerate(ppl_metrics):
+        ratio = m2 / m3
+        axes[0].annotate(f"{ratio:.2f}× ↓", (i, max(m2, m3) * 1.05), ha="center", fontsize=9)
+        axes[0].annotate(f"{m2:.0f}", (i - w/2, m2), ha="center", va="bottom", fontsize=8)
+        axes[0].annotate(f"{m3:.0f}", (i + w/2, m3), ha="center", va="bottom", fontsize=8)
+    axes[0].set_xticks(x)
+    axes[0].set_xticklabels([m[0] for m in ppl_metrics])
+    axes[0].set_yscale("log")
+    axes[0].set_ylabel("PPL (log, lower = better)")
+    axes[0].set_title("Perplexity")
+    axes[0].legend(fontsize=8, loc="upper left")
+    axes[0].grid(axis="y", alpha=0.3, which="both")
+
+    # Right: zero-shot accuracy (higher is better)
+    x = np.arange(len(other_metrics))
+    axes[1].bar(x - w / 2, [m[1] for m in other_metrics], w, label="BitMamba-2", color="#888")
+    axes[1].bar(x + w / 2, [m[2] for m in other_metrics], w, label="BitMamba-3", color="#ff7f0e")
+    for i, (label, m2, m3, _) in enumerate(other_metrics):
+        axes[1].annotate(f"{m2:.3f}", (i - w/2, m2), ha="center", va="bottom", fontsize=8)
+        axes[1].annotate(f"{m3:.3f}", (i + w/2, m3), ha="center", va="bottom", fontsize=8)
+    axes[1].set_xticks(x)
+    axes[1].set_xticklabels([m[0] for m in other_metrics], rotation=15, fontsize=8)
+    axes[1].set_ylabel("Accuracy (higher = better)")
+    axes[1].set_title("Zero-shot downstream (200 samples)")
+    axes[1].set_ylim(0, 0.5)
+    axes[1].legend(fontsize=8)
+    axes[1].grid(axis="y", alpha=0.3)
+
+    plt.suptitle("Fig 7. BitMamba-2 vs BitMamba-3 at 130M (same 480M tokens, same training)")
+    plt.tight_layout()
+    _save(fig, "fig7_bitmamba2_vs_bitmamba3")
+
+
 def main():
     print("Generating paper figures...")
     try:
@@ -223,6 +346,14 @@ def main():
         fig5_parity_curves()
     except Exception as e:
         print(f"  Fig 5 failed: {e}")
+    try:
+        fig6_parity_scaling_progression()
+    except Exception as e:
+        print(f"  Fig 6 failed: {e}")
+    try:
+        fig7_bitmamba2_vs_bitmamba3()
+    except Exception as e:
+        print(f"  Fig 7 failed: {e}")
     print(f"\nDone. Figures in {_figs}")
 
 

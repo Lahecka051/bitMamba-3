@@ -117,14 +117,17 @@ def bitify_model(model: nn.Module) -> tuple[int, int]:
     return n_modified, n_ternary_params
 
 
-def build_model(preset: str, device: str, dtype: torch.dtype) -> MambaLMHeadModel:
+def build_model(preset: str, device: str, dtype: torch.dtype, bitify: bool = True) -> MambaLMHeadModel:
     cfg = MambaConfig(**PRESETS[preset])
     model = MambaLMHeadModel(cfg, device=device, dtype=dtype)
-    n_replaced, n_tern = bitify_model(model)
     total = sum(p.numel() for p in model.parameters())
-    print(f"[build] preset={preset} total_params={total/1e6:.1f}M, "
-          f"replaced_linears={n_replaced}, ternary_params={n_tern/1e6:.1f}M "
-          f"({100*n_tern/total:.1f}%)")
+    if bitify:
+        n_replaced, n_tern = bitify_model(model)
+        print(f"[build] preset={preset} total_params={total/1e6:.1f}M, "
+              f"replaced_linears={n_replaced}, ternary_params={n_tern/1e6:.1f}M "
+              f"({100*n_tern/total:.1f}%)")
+    else:
+        print(f"[build] preset={preset} total_params={total/1e6:.1f}M, FP baseline (no bitify)")
     return model
 
 
@@ -160,6 +163,8 @@ def parse_args():
     p.add_argument("--wandb_project", default="bitmamba3")
     p.add_argument("--wandb_run_name", default=None)
     p.add_argument("--resume", default=None, help="Path to checkpoint to resume from")
+    p.add_argument("--no_bitify", action="store_true",
+                   help="Skip BitLinear replacement (train FP baseline for direct quantization comparison)")
     return p.parse_args()
 
 
@@ -187,7 +192,7 @@ def main():
     loader = DataLoader(ds, batch_size=args.batch_size, num_workers=2, pin_memory=True)
 
     # Model
-    model = build_model(args.preset, device, dtype)
+    model = build_model(args.preset, device, dtype, bitify=not args.no_bitify)
     if args.grad_ckpt:
         model.gradient_checkpointing_enable = True  # user hint
     model.train()
