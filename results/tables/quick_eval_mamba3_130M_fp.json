@@ -1,0 +1,6 @@
+{
+  "ckpt": "checkpoints/mamba3_130M_fp/ckpt_final_030000.pt",
+  "preset": "130M",
+  "wikitext103_ppl": 61.861050197131625,
+  "wikitext103_tokens": 37542
+}

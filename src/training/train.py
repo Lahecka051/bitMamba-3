@@ -91,6 +91,18 @@ PRESETS = {
         pad_vocab_size_multiple=8,
         tie_embeddings=True,
     ),
+    "370M_mamba2": dict(
+        d_model=1024,
+        n_layer=48,
+        d_intermediate=0,
+        vocab_size=50280,
+        ssm_cfg=dict(layer="Mamba2", d_state=128, headdim=64, chunk_size=256),
+        rms_norm=True,
+        residual_in_fp32=True,
+        fused_add_norm=True,
+        pad_vocab_size_multiple=8,
+        tie_embeddings=True,
+    ),
 }
 
 
