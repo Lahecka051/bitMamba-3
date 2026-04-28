@@ -1,0 +1,11 @@
+{
+  "ckpt": "checkpoints/bitmamba2_370M/ckpt_final_030000.pt",
+  "preset": "370M_mamba2",
+  "wikitext103_ppl": 105.74019006793614,
+  "wikitext103_tokens": 37542,
+  "generation_samples": [
+    "The quick brown fox, the black fox, the black fox, the black fox, the black fox, the black fox, the black fox, the black fox, the",
+    "In the beginning, there was a great deal of confusion about the meaning of the word \"soul\" and the meaning of the word \"soul.\" The word \"soul",
+    "Machine learning models can be used to help students learn to use the computer.\n- The computer can be used to teach the computer to the students.\n- The computer"
+  ]
+}
