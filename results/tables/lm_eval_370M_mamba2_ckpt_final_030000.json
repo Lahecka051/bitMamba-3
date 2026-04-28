@@ -1,0 +1,257 @@
+{
+  "ckpt": "checkpoints/bitmamba2_370M/ckpt_final_030000.pt",
+  "preset": "370M_mamba2",
+  "tasks": [
+    "lambada_openai",
+    "hellaswag",
+    "arc_easy",
+    "piqa"
+  ],
+  "num_fewshot": 0,
+  "results": {
+    "arc_easy": {
+      "alias": "arc_easy",
+      "acc,none": 0.39,
+      "acc_stderr,none": 0.03457567623250011,
+      "acc_norm,none": 0.39,
+      "acc_norm_stderr,none": 0.03457567623250011
+    },
+    "hellaswag": {
+      "alias": "hellaswag",
+      "acc,none": 0.345,
+      "acc_stderr,none": 0.03369796379336737,
+      "acc_norm,none": 0.35,
+      "acc_norm_stderr,none": 0.033811478530256706
+    },
+    "lambada_openai": {
+      "alias": "lambada_openai",
+      "perplexity,none": 5439.7281980063935,
+      "perplexity_stderr,none": 1169.3893527273597,
+      "acc,none": 0.03,
+      "acc_stderr,none": 0.012092607484694708
+    },
+    "piqa": {
+      "alias": "piqa",
+      "acc,none": 0.57,
+      "acc_stderr,none": 0.03509498954918328,
+      "acc_norm,none": 0.54,
+      "acc_norm_stderr,none": 0.03533045720097818
+    }
+  },
+  "configs": {
+    "arc_easy": {
+      "task": "arc_easy",
+      "tag": [
+        "ai2_arc"
+      ],
+      "dataset_path": "allenai/ai2_arc",
+      "dataset_name": "ARC-Easy",
+      "training_split": "train",
+      "validation_split": "validation",
+      "test_split": "test",
+      "doc_to_text": "Question: {{question}}\nAnswer:",
+      "doc_to_target": "{{choices.label.index(answerKey)}}",
+      "unsafe_code": false,
+      "doc_to_choice": "{{choices.text}}",
+      "description": "",
+      "target_delimiter": " ",
+      "fewshot_delimiter": "\n\n",
+      "fewshot_config": {
+        "sampler": "default",
+        "split": null,
+        "process_docs": null,
+        "fewshot_indices": null,
+        "samples": null,
+        "doc_to_text": "Question: {{question}}\nAnswer:",
+        "doc_to_choice": "{{choices.text}}",
+        "doc_to_target": "{{choices.label.index(answerKey)}}",
+        "gen_prefix": null,
+        "fewshot_delimiter": "\n\n",
+        "target_delimiter": " "
+      },
+      "num_fewshot": 0,
+      "metric_list": [
+        {
+          "metric": "acc",
+          "aggregation": "mean",
+          "higher_is_better": true
+        },
+        {
+          "metric": "acc_norm",
+          "aggregation": "mean",
+          "higher_is_better": true
+        }
+      ],
+      "output_type": "multiple_choice",
+      "repeats": 1,
+      "should_decontaminate": true,
+      "doc_to_decontamination_query": "Question: {{question}}\nAnswer:",
+      "metadata": {
+        "version": 1.0,
+        "preset": "370M_mamba2",
+        "ckpt": "checkpoints/bitmamba2_370M/ckpt_final_030000.pt",
+        "tokenizer": "EleutherAI/gpt-neox-20b",
+        "dtype": "bfloat16",
+        "max_length": 2048
+      }
+    },
+    "hellaswag": {
+      "task": "hellaswag",
+      "tag": [
+        "multiple_choice"
+      ],
+      "dataset_path": "Rowan/hellaswag",
+      "training_split": "train",
+      "validation_split": "validation",
+      "process_docs": "def process_docs(dataset: datasets.Dataset) -> datasets.Dataset:\n    def _process_doc(doc):\n        ctx = doc[\"ctx_a\"] + \" \" + doc[\"ctx_b\"].capitalize()\n        out_doc = {\n            \"query\": preprocess(doc[\"activity_label\"] + \": \" + ctx),\n            \"choices\": [preprocess(ending) for ending in doc[\"endings\"]],\n            \"gold\": int(doc[\"label\"]),\n        }\n        return out_doc\n\n    return dataset.map(_process_doc)\n",
+      "doc_to_text": "{{query}}",
+      "doc_to_target": "{{label}}",
+      "unsafe_code": false,
+      "doc_to_choice": "choices",
+      "description": "",
+      "target_delimiter": " ",
+      "fewshot_delimiter": "\n\n",
+      "fewshot_config": {
+        "sampler": "default",
+        "split": null,
+        "process_docs": "<function process_docs at 0x740f00a24ae0>",
+        "fewshot_indices": null,
+        "samples": null,
+        "doc_to_text": "{{query}}",
+        "doc_to_choice": "choices",
+        "doc_to_target": "{{label}}",
+        "gen_prefix": null,
+        "fewshot_delimiter": "\n\n",
+        "target_delimiter": " "
+      },
+      "num_fewshot": 0,
+      "metric_list": [
+        {
+          "metric": "acc",
+          "aggregation": "mean",
+          "higher_is_better": true
+        },
+        {
+          "metric": "acc_norm",
+          "aggregation": "mean",
+          "higher_is_better": true
+        }
+      ],
+      "output_type": "multiple_choice",
+      "repeats": 1,
+      "should_decontaminate": false,
+      "metadata": {
+        "version": 1.0,
+        "preset": "370M_mamba2",
+        "ckpt": "checkpoints/bitmamba2_370M/ckpt_final_030000.pt",
+        "tokenizer": "EleutherAI/gpt-neox-20b",
+        "dtype": "bfloat16",
+        "max_length": 2048
+      }
+    },
+    "lambada_openai": {
+      "task": "lambada_openai",
+      "tag": [
+        "lambada"
+      ],
+      "dataset_path": "EleutherAI/lambada_openai",
+      "dataset_name": "default",
+      "test_split": "test",
+      "doc_to_text": "{{text.split(' ')[:-1]|join(' ')}}",
+      "doc_to_target": "{{' '+text.split(' ')[-1]}}",
+      "unsafe_code": false,
+      "description": "",
+      "target_delimiter": " ",
+      "fewshot_delimiter": "\n\n",
+      "fewshot_config": {
+        "sampler": "default",
+        "split": null,
+        "process_docs": null,
+        "fewshot_indices": null,
+        "samples": null,
+        "doc_to_text": "{{text.split(' ')[:-1]|join(' ')}}",
+        "doc_to_choice": null,
+        "doc_to_target": "{{' '+text.split(' ')[-1]}}",
+        "gen_prefix": null,
+        "fewshot_delimiter": "\n\n",
+        "target_delimiter": " "
+      },
+      "num_fewshot": 0,
+      "metric_list": [
+        {
+          "metric": "perplexity",
+          "aggregation": "perplexity",
+          "higher_is_better": false
+        },
+        {
+          "metric": "acc",
+          "aggregation": "mean",
+          "higher_is_better": true
+        }
+      ],
+      "output_type": "loglikelihood",
+      "repeats": 1,
+      "should_decontaminate": true,
+      "doc_to_decontamination_query": "{{text}}",
+      "metadata": {
+        "version": 1.0,
+        "preset": "370M_mamba2",
+        "ckpt": "checkpoints/bitmamba2_370M/ckpt_final_030000.pt",
+        "tokenizer": "EleutherAI/gpt-neox-20b",
+        "dtype": "bfloat16",
+        "max_length": 2048
+      }
+    },
+    "piqa": {
+      "task": "piqa",
+      "dataset_path": "baber/piqa",
+      "training_split": "train",
+      "validation_split": "validation",
+      "doc_to_text": "Question: {{goal}}\nAnswer:",
+      "doc_to_target": "label",
+      "unsafe_code": false,
+      "doc_to_choice": "{{[sol1, sol2]}}",
+      "description": "",
+      "target_delimiter": " ",
+      "fewshot_delimiter": "\n\n",
+      "fewshot_config": {
+        "sampler": "default",
+        "split": null,
+        "process_docs": null,
+        "fewshot_indices": null,
+        "samples": null,
+        "doc_to_text": "Question: {{goal}}\nAnswer:",
+        "doc_to_choice": "{{[sol1, sol2]}}",
+        "doc_to_target": "label",
+        "gen_prefix": null,
+        "fewshot_delimiter": "\n\n",
+        "target_delimiter": " "
+      },
+      "num_fewshot": 0,
+      "metric_list": [
+        {
+          "metric": "acc",
+          "aggregation": "mean",
+          "higher_is_better": true
+        },
+        {
+          "metric": "acc_norm",
+          "aggregation": "mean",
+          "higher_is_better": true
+        }
+      ],
+      "output_type": "multiple_choice",
+      "repeats": 1,
+      "should_decontaminate": true,
+      "doc_to_decontamination_query": "goal",
+      "metadata": {
+        "version": 1.0,
+        "preset": "370M_mamba2",
+        "ckpt": "checkpoints/bitmamba2_370M/ckpt_final_030000.pt",
+        "tokenizer": "EleutherAI/gpt-neox-20b",
+        "dtype": "bfloat16",
+        "max_length": 2048
+      }
+    }
+  }
+}

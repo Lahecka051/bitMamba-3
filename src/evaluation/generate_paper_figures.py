@@ -321,72 +321,93 @@ def fig8_quant_cost_decomposition():
 
 
 def fig7_bitmamba2_vs_bitmamba3():
-    """BitMamba-2 vs BitMamba-3 130M comparison across metrics."""
-    files = {
-        "BitMamba-2": _tables / "lm_eval_130M_mamba2_ckpt_final_030000.json",
-        "BitMamba-3": _tables / "lm_eval_130M.json",
+    """BitMamba-2 vs BitMamba-3 at 130M and 370M comparison across metrics."""
+    files_130 = {
+        "BitMamba-2 130M": _tables / "lm_eval_130M_mamba2_ckpt_final_030000.json",
+        "BitMamba-3 130M": _tables / "lm_eval_130M.json",
     }
-    quick = {
-        "BitMamba-2": _tables / "quick_eval_bitmamba2_130M.json",
-        "BitMamba-3": _tables / "quick_eval_130M.json",
+    files_370 = {
+        "BitMamba-2 370M": _tables / "lm_eval_370M_mamba2_ckpt_final_030000.json",
+        "BitMamba-3 370M": _tables / "lm_eval_370M.json",
     }
+    quick_130 = {
+        "BitMamba-2 130M": _tables / "quick_eval_bitmamba2_130M.json",
+        "BitMamba-3 130M": _tables / "quick_eval_130M.json",
+    }
+    quick_370 = {
+        "BitMamba-2 370M": _tables / "quick_eval_bitmamba2_370M.json",
+        "BitMamba-3 370M": _tables / "quick_eval_370M.json",
+    }
+    files = {**files_130, **files_370}
+    quick = {**quick_130, **quick_370}
     for label, p in {**files, **quick}.items():
         if not p.exists():
             print(f"  fig7 missing: {p}")
             return
 
-    bm2_le = json.loads(files["BitMamba-2"].read_text()).get("results", {})
-    bm3_le = json.loads(files["BitMamba-3"].read_text()).get("results", {})
-    bm2_qe = json.loads(quick["BitMamba-2"].read_text())
-    bm3_qe = json.loads(quick["BitMamba-3"].read_text())
+    le = {k: json.loads(v.read_text()).get("results", {}) for k, v in files.items()}
+    qe = {k: json.loads(v.read_text()) for k, v in quick.items()}
 
-    metrics = [
-        ("WikiText PPL", bm2_qe["wikitext103_ppl"], bm3_qe["wikitext103_ppl"], True),  # lower better
-        ("LAMBADA PPL", bm2_le["lambada_openai"]["perplexity,none"], bm3_le["lambada_openai"]["perplexity,none"], True),
-        ("LAMBADA acc", bm2_le["lambada_openai"]["acc,none"], bm3_le["lambada_openai"]["acc,none"], False),
-        ("HellaSwag norm", bm2_le["hellaswag"]["acc_norm,none"], bm3_le["hellaswag"]["acc_norm,none"], False),
-        ("ARC-Easy acc", bm2_le["arc_easy"]["acc,none"], bm3_le["arc_easy"]["acc,none"], False),
-        ("PIQA acc", bm2_le["piqa"]["acc,none"], bm3_le["piqa"]["acc,none"], False),
-    ]
+    # Per-scale (130M, 370M) bars: 4 metrics
+    scales = ["130M", "370M"]
+    fig, axes = plt.subplots(2, 2, figsize=(13, 7))
 
-    fig, axes = plt.subplots(1, 2, figsize=(11, 4))
-    # Left: PPLs (log scale, lower is better)
-    ppl_metrics = [m for m in metrics if m[3]]
-    other_metrics = [m for m in metrics if not m[3]]
-
-    x = np.arange(len(ppl_metrics))
+    # Top-left: WikiText PPL
+    x = np.arange(len(scales))
     w = 0.35
-    axes[0].bar(x - w / 2, [m[1] for m in ppl_metrics], w, label="BitMamba-2 (Mamba-2 + ternary)", color="#888")
-    axes[0].bar(x + w / 2, [m[2] for m in ppl_metrics], w, label="BitMamba-3 (Mamba-3 + ternary)", color="#ff7f0e")
-    for i, (label, m2, m3, _) in enumerate(ppl_metrics):
-        ratio = m2 / m3
-        axes[0].annotate(f"{ratio:.2f}× ↓", (i, max(m2, m3) * 1.05), ha="center", fontsize=9)
-        axes[0].annotate(f"{m2:.0f}", (i - w/2, m2), ha="center", va="bottom", fontsize=8)
-        axes[0].annotate(f"{m3:.0f}", (i + w/2, m3), ha="center", va="bottom", fontsize=8)
-    axes[0].set_xticks(x)
-    axes[0].set_xticklabels([m[0] for m in ppl_metrics])
-    axes[0].set_yscale("log")
-    axes[0].set_ylabel("PPL (log, lower = better)")
-    axes[0].set_title("Perplexity")
-    axes[0].legend(fontsize=8, loc="upper left")
-    axes[0].grid(axis="y", alpha=0.3, which="both")
+    m2_w = [qe[f"BitMamba-2 {s}"]["wikitext103_ppl"] for s in scales]
+    m3_w = [qe[f"BitMamba-3 {s}"]["wikitext103_ppl"] for s in scales]
+    axes[0, 0].bar(x - w/2, m2_w, w, label="BitMamba-2", color="#888")
+    axes[0, 0].bar(x + w/2, m3_w, w, label="BitMamba-3", color="#ff7f0e")
+    for i, (m2, m3) in enumerate(zip(m2_w, m3_w)):
+        axes[0, 0].annotate(f"{m2:.1f}", (i - w/2, m2), ha="center", va="bottom", fontsize=9)
+        axes[0, 0].annotate(f"{m3:.1f}", (i + w/2, m3), ha="center", va="bottom", fontsize=9)
+        axes[0, 0].annotate(f"{m2/m3:.2f}× ↓", (i, max(m2, m3) * 1.1), ha="center", fontsize=9, color="darkgreen", weight="bold")
+    axes[0, 0].set_xticks(x); axes[0, 0].set_xticklabels(scales)
+    axes[0, 0].set_yscale("log")
+    axes[0, 0].set_ylabel("WikiText-103 PPL (log)")
+    axes[0, 0].set_title("WikiText-103 PPL (lower = better)")
+    axes[0, 0].legend(fontsize=8); axes[0, 0].grid(axis="y", alpha=0.3, which="both")
 
-    # Right: zero-shot accuracy (higher is better)
-    x = np.arange(len(other_metrics))
-    axes[1].bar(x - w / 2, [m[1] for m in other_metrics], w, label="BitMamba-2", color="#888")
-    axes[1].bar(x + w / 2, [m[2] for m in other_metrics], w, label="BitMamba-3", color="#ff7f0e")
-    for i, (label, m2, m3, _) in enumerate(other_metrics):
-        axes[1].annotate(f"{m2:.3f}", (i - w/2, m2), ha="center", va="bottom", fontsize=8)
-        axes[1].annotate(f"{m3:.3f}", (i + w/2, m3), ha="center", va="bottom", fontsize=8)
-    axes[1].set_xticks(x)
-    axes[1].set_xticklabels([m[0] for m in other_metrics], rotation=15, fontsize=8)
-    axes[1].set_ylabel("Accuracy (higher = better)")
-    axes[1].set_title("Zero-shot downstream (200 samples)")
-    axes[1].set_ylim(0, 0.5)
-    axes[1].legend(fontsize=8)
-    axes[1].grid(axis="y", alpha=0.3)
+    # Top-right: LAMBADA PPL
+    m2_l = [le[f"BitMamba-2 {s}"]["lambada_openai"]["perplexity,none"] for s in scales]
+    m3_l = [le[f"BitMamba-3 {s}"]["lambada_openai"]["perplexity,none"] for s in scales]
+    axes[0, 1].bar(x - w/2, m2_l, w, label="BitMamba-2", color="#888")
+    axes[0, 1].bar(x + w/2, m3_l, w, label="BitMamba-3", color="#ff7f0e")
+    for i, (m2, m3) in enumerate(zip(m2_l, m3_l)):
+        axes[0, 1].annotate(f"{m2:.0f}", (i - w/2, m2), ha="center", va="bottom", fontsize=9)
+        axes[0, 1].annotate(f"{m3:.0f}", (i + w/2, m3), ha="center", va="bottom", fontsize=9)
+        axes[0, 1].annotate(f"{m2/m3:.2f}× ↓", (i, max(m2, m3) * 1.1), ha="center", fontsize=9, color="darkgreen", weight="bold")
+    axes[0, 1].set_xticks(x); axes[0, 1].set_xticklabels(scales)
+    axes[0, 1].set_yscale("log")
+    axes[0, 1].set_ylabel("LAMBADA PPL (log)")
+    axes[0, 1].set_title("LAMBADA PPL (long-range completion)")
+    axes[0, 1].legend(fontsize=8); axes[0, 1].grid(axis="y", alpha=0.3, which="both")
 
-    plt.suptitle("Fig 7. BitMamba-2 vs BitMamba-3 at 130M (same 480M tokens, same training)")
+    # Bottom: HellaSwag norm + ARC-Easy + PIQA + LAMBADA acc
+    other_tasks = [
+        ("HellaSwag", "hellaswag", "acc_norm,none"),
+        ("ARC-Easy", "arc_easy", "acc,none"),
+        ("PIQA", "piqa", "acc,none"),
+        ("LAMBADA", "lambada_openai", "acc,none"),
+    ]
+    for ax_idx, scale in enumerate(scales):
+        ax = axes[1, ax_idx]
+        x = np.arange(len(other_tasks))
+        m2_vals = [le[f"BitMamba-2 {scale}"][t[1]][t[2]] for t in other_tasks]
+        m3_vals = [le[f"BitMamba-3 {scale}"][t[1]][t[2]] for t in other_tasks]
+        ax.bar(x - w/2, m2_vals, w, label="BitMamba-2", color="#888")
+        ax.bar(x + w/2, m3_vals, w, label="BitMamba-3", color="#ff7f0e")
+        for i, (m2, m3) in enumerate(zip(m2_vals, m3_vals)):
+            ax.annotate(f"{m2:.2f}", (i - w/2, m2), ha="center", va="bottom", fontsize=8)
+            ax.annotate(f"{m3:.2f}", (i + w/2, m3), ha="center", va="bottom", fontsize=8)
+        ax.set_xticks(x); ax.set_xticklabels([t[0] for t in other_tasks], fontsize=9)
+        ax.set_ylabel("Accuracy")
+        ax.set_title(f"{scale} zero-shot accuracy")
+        ax.set_ylim(0, 0.6)
+        ax.legend(fontsize=8); ax.grid(axis="y", alpha=0.3)
+
+    plt.suptitle("Fig 7. BitMamba-2 vs BitMamba-3 at 130M and 370M\n(matched 480M fineweb-edu tokens, matched ternary quantization)")
     plt.tight_layout()
     _save(fig, "fig7_bitmamba2_vs_bitmamba3")
 
