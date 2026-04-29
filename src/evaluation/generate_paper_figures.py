@@ -253,6 +253,63 @@ def fig6_parity_scaling_progression():
     _save(fig, "fig6_parity_scaling_progression")
 
 
+def fig9_int4_parity_control():
+    """INT4 control at d=512/depth=4: bias specific to ternary."""
+    p = _tables / "parity_int4_d512.json"
+    if not p.exists():
+        return
+    data = json.loads(p.read_text())
+
+    by_config = {}
+    for r in data:
+        arch = r["arch"]
+        mode = r.get("bitize_mode", False)
+        if mode == "ternary" or mode is True:
+            mode_str = "ternary"
+        elif mode == "int4":
+            mode_str = "int4"
+        else:
+            mode_str = "FP"
+        key = f"{arch}_{mode_str}"
+        by_config.setdefault(key, []).append(r["peak_acc_all"])
+
+    archs = ["mamba3_siso", "mamba3_mimo"]
+    arch_labels = ["SISO", "MIMO"]
+    modes = ["FP", "int4", "ternary"]
+    mode_labels = ["FP (16-bit)", "INT4 (4-bit)", "ternary (1.58-bit)"]
+    colors = ["#bbb", "#7aa6c2", "#ff7f0e"]
+
+    fig, ax = plt.subplots(figsize=(9, 4.5))
+    x = np.arange(len(archs))
+    width = 0.25
+    for i, (mode, mode_label, color) in enumerate(zip(modes, mode_labels, colors)):
+        means = []
+        stds = []
+        for arch in archs:
+            key = f"{arch}_{mode}"
+            vals = by_config.get(key, [0])
+            means.append(float(np.mean(vals)))
+            stds.append(float(np.std(vals, ddof=1)) if len(vals) > 1 else 0.0)
+        bars = ax.bar(x + (i - 1) * width, means, width, yerr=stds,
+                       capsize=4, label=mode_label, color=color, edgecolor="black")
+        for bar, m, s in zip(bars, means, stds):
+            ax.annotate(f"{m:.3f}\n±{s:.3f}",
+                        (bar.get_x() + bar.get_width() / 2, bar.get_height() + s + 0.01),
+                        ha="center", va="bottom", fontsize=8)
+
+    ax.axhline(0.5, color="red", linestyle="--", alpha=0.5, label="random")
+    ax.set_xticks(x)
+    ax.set_xticklabels(arch_labels)
+    ax.set_ylabel("Peak parity accuracy (3 seeds, μ±σ)")
+    ax.set_title("Fig 9. Inductive bias is specific to ternary, not generic low-bit\n"
+                 "(d=512, depth=4, cosine LR, 5K steps; INT4 PTQ identical to FP at chance)")
+    ax.set_ylim(0.4, 1.05)
+    ax.legend(loc="upper left", fontsize=9)
+    ax.grid(axis="y", alpha=0.3)
+
+    _save(fig, "fig9_int4_parity_control")
+
+
 def fig8_quant_cost_decomposition():
     """Architecture x quantization 2x2 decomposition at 130M, 480M tokens."""
     cells = {}
@@ -446,6 +503,10 @@ def main():
         fig8_quant_cost_decomposition()
     except Exception as e:
         print(f"  Fig 8 failed: {e}")
+    try:
+        fig9_int4_parity_control()
+    except Exception as e:
+        print(f"  Fig 9 failed: {e}")
     print(f"\nDone. Figures in {_figs}")
 
 
