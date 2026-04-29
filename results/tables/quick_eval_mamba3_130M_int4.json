@@ -1,0 +1,9 @@
+{
+  "ckpt": "checkpoints/mamba3_130M_fp/ckpt_final_030000.pt",
+  "preset": "130M",
+  "quantization": "INT4 PTQ (per-tensor symmetric, RTN)",
+  "wikitext103_ppl": 64.15144267759153,
+  "wikitext103_tokens": 37542,
+  "n_quantized_layers": 48,
+  "n_quantized_params": 95993856
+}

@@ -70,8 +70,7 @@ class ParityModel(nn.Module):
         self.norm = nn.LayerNorm(d_model, **factory_kwargs)
         self.head = nn.Linear(d_model, 2, **factory_kwargs)
 
-        if bitize:
-            # Replace Linear layers inside each SSM block with BitLinear
+        if bitize == "ternary" or bitize is True:
             for blk in self.blocks:
                 for m in blk.modules():
                     for attr in ("in_proj", "out_proj"):
@@ -79,6 +78,16 @@ class ParityModel(nn.Module):
                         if isinstance(lin, nn.Linear) and not isinstance(lin, BitLinear):
                             new = BitLinear(lin.in_features, lin.out_features, bias=lin.bias is not None,
                                             device=lin.weight.device, dtype=lin.weight.dtype)
+                            setattr(m, attr, new)
+        elif bitize == "int4":
+            from bitmamba3.int4_linear import Int4Linear
+            for blk in self.blocks:
+                for m in blk.modules():
+                    for attr in ("in_proj", "out_proj"):
+                        lin = getattr(m, attr, None)
+                        if isinstance(lin, nn.Linear) and not isinstance(lin, Int4Linear):
+                            new = Int4Linear(lin.in_features, lin.out_features, bias=lin.bias is not None,
+                                             device=lin.weight.device, dtype=lin.weight.dtype)
                             setattr(m, attr, new)
 
     def forward(self, x):
