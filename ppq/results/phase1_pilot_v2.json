@@ -1,0 +1,61 @@
+{
+  "distributions": {
+    "ADT_mean": -1.074923,
+    "ADT_std": 2.366609,
+    "ADT_min": -39.267349,
+    "ADT_max": -0.0,
+    "Angles_mean": -0.049599,
+    "Angles_std": 2.129563,
+    "Angles_min": -7.91945,
+    "Angles_max": 6.568891
+  },
+  "baseline_ppl": 1.0036,
+  "W8_cartesian": {
+    "ppl": 108.7383,
+    "drop": 107.7347
+  },
+  "W8_polar": {
+    "ppl": 1.0047,
+    "drop": 0.0011
+  },
+  "W8_polar_stable": {
+    "ppl": 1.0047,
+    "drop": 0.0011
+  },
+  "W6_cartesian": {
+    "ppl": 4250.3506,
+    "drop": 4249.347
+  },
+  "W6_polar": {
+    "ppl": 1.0041,
+    "drop": 0.0005
+  },
+  "W6_polar_stable": {
+    "ppl": 1.0041,
+    "drop": 0.0005
+  },
+  "W4_cartesian": {
+    "ppl": 8076.2698,
+    "drop": 8075.2662
+  },
+  "W4_polar": {
+    "ppl": 66.7117,
+    "drop": 65.7081
+  },
+  "W4_polar_stable": {
+    "ppl": 61.9298,
+    "drop": 60.9262
+  },
+  "W3_cartesian": {
+    "ppl": 42528.5634,
+    "drop": 42527.5598
+  },
+  "W3_polar": {
+    "ppl": 5498.1069,
+    "drop": 5497.1033
+  },
+  "W3_polar_stable": {
+    "ppl": 5485.1967,
+    "drop": 5484.1931
+  }
+}
