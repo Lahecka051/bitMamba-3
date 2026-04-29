@@ -56,3 +56,6 @@ desktop.ini
 
 # Logs
 *.log
+
+# Generated DOCX (paper output regenerated from paper/generate_paper.js)
+*.docx
