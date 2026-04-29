@@ -25,13 +25,11 @@ _tables = _root / "results" / "tables"
 
 
 def _save(fig, name):
-    """Save figure as both PNG and JPG without title baked in."""
+    """Save figure as PNG only (caption-free) for Word manual captioning."""
     png = _figs / f"{name}.png"
-    jpg = _figs / f"{name}.jpg"
     fig.savefig(png, dpi=150, bbox_inches="tight")
-    fig.savefig(jpg, dpi=150, bbox_inches="tight", format="jpg")
     plt.close(fig)
-    print(f"  saved {png.name} + {jpg.name}")
+    print(f"  saved {png.name}")
 
 
 def fig1_baseline_throughput():
@@ -74,20 +72,22 @@ def fig2_parity_ternary_vs_fp():
     stds = [np.std(by_config.get(c, [0]), ddof=1) for c in configs]
     colors = ["#888", "#1f77b4", "#aaa", "#ff7f0e"]
 
-    fig, ax = plt.subplots(figsize=(7, 4))
+    fig, ax = plt.subplots(figsize=(7.5, 4.6))
     x = np.arange(len(configs))
     bars = ax.bar(x, means, yerr=stds, capsize=6, color=colors, edgecolor="black")
     ax.set_xticks(x)
     ax.set_xticklabels(labels, rotation=15)
     ax.set_ylabel("Peak parity accuracy (5 seeds, μ±σ)")
     ax.axhline(0.5, color="red", linestyle="--", alpha=0.5, label="random")
-    ax.set_ylim(0.4, 1.05)
-    ax.legend()
+    # Higher ylim to keep "0.949 ±0.091" annotations inside the plot box
+    ax.set_ylim(0.4, 1.20)
+    ax.legend(loc="upper left")
     ax.grid(axis="y", alpha=0.3)
     for bar, m, s in zip(bars, means, stds):
         ax.annotate(f"{m:.3f}\n±{s:.3f}",
                     xy=(bar.get_x() + bar.get_width() / 2, bar.get_height() + s + 0.01),
                     ha="center", va="bottom", fontsize=8)
+    plt.tight_layout()
     _save(fig, "fig2_parity_ternary_vs_fp")
 
 
@@ -106,15 +106,20 @@ def fig3_scaling_curves():
     if not runs:
         return
 
-    fig, ax = plt.subplots(figsize=(6, 4))
+    # Wider figure + rotated labels prevent x-tick overlap
+    fig, ax = plt.subplots(figsize=(7.5, 4.5))
     labels = [r[0] for r in runs]
     ppls = [r[1] for r in runs]
-    ax.bar(labels, ppls, color=["#888", "#aaa", "#ff7f0e", "#d62728"])
+    colors = ["#888", "#aaa", "#ff7f0e", "#d62728"][:len(runs)]
+    ax.bar(labels, ppls, color=colors, edgecolor="black")
     for i, p in enumerate(ppls):
-        ax.annotate(f"{p:.1f}", (i, p), ha="center", va="bottom")
+        ax.annotate(f"{p:.1f}", (i, p), ha="center", va="bottom", fontsize=9)
     ax.set_yscale("log")
-    ax.set_ylabel("WikiText-103 PPL (log)")
+    ax.set_ylabel("WikiText-103 PPL (log, lower = better)")
+    # Compact x labels to reduce overlap risk; rotate as backup
+    ax.set_xticklabels([l.replace(" @ ", "\n@ ") for l in labels], rotation=0, fontsize=9)
     ax.grid(axis="y", alpha=0.3, which="both")
+    plt.tight_layout()
     _save(fig, "fig3_scaling_curves")
 
 
@@ -212,7 +217,9 @@ def fig6_parity_scaling_progression():
             else:
                 means[c].append(np.nan); stds[c].append(np.nan)
 
-    fig, ax = plt.subplots(figsize=(8, 4.5))
+    # Wider figure to hold legend outside the plot area (legend in plot
+    # was overlapping the d=512 MIMO+ternary and SISO+ternary bars)
+    fig, ax = plt.subplots(figsize=(10.5, 4.5))
     x = np.arange(len(sweeps))
     width = 0.2
     for i, (c, label, color) in enumerate(zip(configs, labels, colors)):
@@ -222,9 +229,11 @@ def fig6_parity_scaling_progression():
     ax.set_xticklabels([s[0] for s in sweeps])
     ax.axhline(0.5, color="red", linestyle="--", alpha=0.5, label="random")
     ax.set_ylabel("Peak parity accuracy (5 seeds, μ±σ)")
-    ax.set_ylim(0.4, 1.05)
-    ax.legend(loc="lower right", fontsize=8)
+    ax.set_ylim(0.4, 1.15)
+    # Legend OUTSIDE the plot so the d=512 bars are fully visible
+    ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1.0), fontsize=9)
     ax.grid(axis="y", alpha=0.3)
+    plt.tight_layout()
     _save(fig, "fig6_parity_scaling_progression")
 
 
@@ -383,7 +392,7 @@ def fig9_int4_parity_control():
     mode_labels = ["FP (16-bit)", "INT4 (4-bit)", "ternary (1.58-bit)"]
     colors = ["#bbb", "#7aa6c2", "#ff7f0e"]
 
-    fig, ax = plt.subplots(figsize=(9, 4.5))
+    fig, ax = plt.subplots(figsize=(10, 5))
     x = np.arange(len(archs)); width = 0.25
     for i, (mode, mode_label, color) in enumerate(zip(modes, mode_labels, colors)):
         means, stds = [], []
@@ -401,9 +410,11 @@ def fig9_int4_parity_control():
     ax.axhline(0.5, color="red", linestyle="--", alpha=0.5, label="random")
     ax.set_xticks(x); ax.set_xticklabels(arch_labels)
     ax.set_ylabel("Peak parity accuracy (3 seeds, μ±σ)")
-    ax.set_ylim(0.4, 1.05)
-    ax.legend(loc="upper left", fontsize=9)
+    ax.set_ylim(0.4, 1.15)
+    # Legend outside plot to avoid covering ternary bars
+    ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1.0), fontsize=9)
     ax.grid(axis="y", alpha=0.3)
+    plt.tight_layout()
     _save(fig, "fig9_int4_parity_control")
 
 
