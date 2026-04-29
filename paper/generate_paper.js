@@ -183,10 +183,11 @@ function figure(filename, captionKo) {
 function intro() {
   return [
     h1("1. 서  론"),
-    p("대규모 언어 모델(LLM)의 추론은 메모리와 곱셈기 사용량의 두 축에서 모두 한계에 직면해 있다. 가중치를 16비트 부동소수점(FP16)에서 4비트 정수(INT4)로 양자화하는 방식은 사실상 표준 기술이 되었지만 [1, 2], 여전히 INT4 ↔ FP 변환과 곱셈기 사용을 요구한다. BitNet b1.58 [3]은 가중치를 {−1, 0, +1}의 삼진(ternary) 값으로 제한하여 곱셈을 조건부 덧셈/뺄셈으로 환원함으로써, 이 두 비용을 동시에 제거할 가능성을 제시하였다."),
-    p("한편 상태공간 모델(SSM) 계열인 Mamba [4], Mamba-2 [5], Mamba-3 [6]는 Transformer 대비 시퀀스 길이에 대해 선형 또는 일정한 메모리 복잡도를 달성하며, 특히 Mamba-3는 RoPE 기반의 회귀(recurrence)를 통해 복소-값 SSM과 동등한 표현력을 부여하여 단순한 상태 추적(state tracking) 과제까지 해결할 수 있음이 보고되었다. 그러나 SSM 계열에 대한 1.58비트 양자화의 영향은 Mamba-2 [7]까지만 다뤄졌으며, Mamba-3에 대한 직접적 정량 비교 및 4비트 PTQ 기준선과의 비교는 부재하였다."),
-    p("본 논문은 다음 세 가지를 기여한다. 첫째, Mamba-3의 in_proj·out_proj 선형 계층을 BitLinear로 교체한 BitMamba-3를 PyTorch 상에서 최소 변경으로 구현하고, 30M·130M·370M 세 규모에서 0부터 학습을 수행한다. 둘째, 동일한 학습 설정 하에서 Mamba-3 FP, Mamba-3 INT4 PTQ, BitMamba-3 ternary, BitMamba-2 ternary 네 구성을 직접 비교하여, 양자화 비용·메모리·하드웨어 친화성·귀납적 편향의 네 축에서 Mamba-3 + 삼진 양자화의 위치를 정량화한다. 셋째, Zybo Z7-20 FPGA를 위한 RTL 모듈을 설계하고 비트-정확 검증을 수행한다."),
-    p("주요 발견은 다음과 같다. (i) BitMamba-3 130M의 PPL은 Mamba-3 FP 대비 +12.2%, INT4 PTQ 대비 +8.2% 증가에 그치는 반면, 가중치 메모리는 INT4 대비 2.5배·FP 대비 10배 감소한다. (ii) 동일한 1.58비트 양자화 하에서, Mamba-3 아키텍처는 Mamba-2 대비 130M에서 1.64배, 370M에서 1.76배의 PPL 우위를 보인다. (iii) 상태 추적 과제에서 FP와 INT4는 모두 무작위 수준에 머무르는 반면 ternary만이 약 0.97의 정확도를 달성하여, 단순한 정밀도 감소가 아닌 1.58비트 이산 구조 자체가 귀납적 편향으로 작용함을 보인다."),
+    p("Mamba-3 [6]은 선택적 상태공간 모델(SSM) 계열의 최신 아키텍처로, 데이터-의존적 RoPE 회귀를 통해 이산화된 복소-값 SSM과 수학적 등가가 되는 실수-값 회귀를 구현한다. 이 등가성 덕분에 Mamba-3은 Transformer 대비 시퀀스 길이에 선형 또는 일정한 메모리 복잡도를 유지하면서도, Mamba-2 [5]가 본질적으로 풀지 못하는 상태 추적(state tracking) 과제까지 해결할 수 있다. 또한 MIMO(Multi-Input Multi-Output) 옵션을 통해 헤드 당 상태를 mimo_rank 배수만큼 확장하여 1.5B 규모에서 Mamba-2 대비 다운스트림 0.6–1.8 점의 정확도 향상을 보고하였다."),
+    p("BitNet b1.58 [3]은 신경망 선형 계층의 가중치를 {−1, 0, +1}의 삼진(ternary) 값으로 제한하여 가중치 당 log₂3 ≈ 1.58비트로 표현하는 양자화 기법이다. 가중치가 ±1이면 부호 변경, 0이면 건너뜀이 되어 곱셈이 조건부 덧셈/뺄셈으로 환원된다. 이는 INT4 [1, 2]와 같은 4비트 PTQ 기법과 달리 곱셈기를 원천적으로 제거할 수 있어, 메모리·연산기 두 축의 비용을 동시에 절감할 잠재력을 갖는다. BitMamba-2 [7]는 동일한 BitLinear 전략을 Mamba-2에 적용하여 1.58비트 SSM의 가능성을 처음으로 정량화하였다."),
+    p("그러나 Mamba-3에 대한 1.58비트 양자화의 영향은 본 논문 작성 시점까지 보고된 바가 없으며, 4비트 PTQ 기준선과의 직접 비교 또한 부재하다. 또한 Mamba-3 RoPE 회귀가 갖는 상태 추적 능력이 양자화 정밀도에 따라 어떻게 변하는지에 대한 실험적 분석도 수행되지 않았다. 본 연구는 다음의 두 가지 가설을 검증하고자 한다: (H1) Mamba-3 + 1.58비트 삼진 양자화의 양자화 비용은 INT4 PTQ 기준선 대비 작은 PPL 손실에 그치며, 메모리·하드웨어 측면에서 명확한 이득을 제공한다; (H2) 1.58비트의 이산 구조는 단순한 정밀도 감소를 넘는 귀납적 편향(inductive bias)으로 작용하여, 동일한 정밀도 감소 효과를 갖는 4비트 양자화와 구별되는 행동 특성을 보인다."),
+    p("본 논문은 다음 세 가지를 기여한다. 첫째, Mamba-3의 in_proj·out_proj 선형 계층을 BitLinear로 교체한 BitMamba-3를 PyTorch 상에서 최소 변경으로 구현하고, 30M·130M·370M 세 규모에서 0부터 학습한다. 둘째, 동일한 학습 데이터(fineweb-edu 480M 토큰)와 동일한 학습 설정 하에서 Mamba-3 FP, Mamba-3 INT4 PTQ, BitMamba-3 ternary, BitMamba-2 ternary 네 구성을 직접 비교하여 H1·H2를 검증한다. 셋째, Zybo Z7-20 FPGA를 대상으로 한 RTL 모듈을 설계하고 핵심 모듈에 대한 비트-정확(bit-exact) 검증을 수행한다."),
+    p("핵심 발견은 다음과 같다. (i) BitMamba-3 130M의 WikiText-103 PPL은 Mamba-3 FP 대비 +12.2%, INT4 PTQ 대비 +8.2% 증가에 그치며 메모리는 INT4 대비 2.5배·FP 대비 10배 감소하여 H1을 지지한다. (ii) 동일 양자화 하에서 Mamba-3 아키텍처는 Mamba-2 대비 130M에서 1.64배·370M에서 1.76배의 PPL 우위를 보인다. (iii) parity 상태 추적 과제에서 FP(peak 0.510)와 INT4(peak 0.527)는 모두 무작위 수준에 머무르는 반면 ternary는 0.972 정확도를 달성하여(약 13σ 분리) H2를 강하게 지지한다. 1.58비트의 이산 구조 {−1, 0, +1} 자체가 본 귀납적 편향의 본질적 요인이며, 4비트의 16-값 격자에서는 동일 효과가 관찰되지 않음을 통제 실험으로 확인한다."),
   ];
 }
 
@@ -205,15 +206,19 @@ function background() {
 function method() {
   return [
     h1("3. 제안 방법"),
-    h2("3.1 BitLinear (PyTorch 이식)"),
-    p("BitLinear는 nn.Linear의 드롭-인 대체로서, 순전파 시 가중치를 1.58비트 삼진 격자에 라운드-트립하고 활성값을 토큰 별 INT8로 양자화한다. 학습 가중치는 FP에 저장되어 임의의 FP 체크포인트와 호환되며, STE로 기울기를 통과시킨다. 본 연구의 구현은 BitMamba-2의 JAX 구현을 PyTorch로 비트 단위 동등 이식하였으며, 활성 RMSNorm·per-row absmax 활성 스케일링·per-tensor absmean 가중치 스케일링의 모든 단계를 동일하게 따른다."),
-    h2("3.2 BitMamba-3 모듈"),
-    p("BitMamba-3는 state-spaces/mamba 저장소의 Mamba3 클래스를 상속하여, 초기화 직후 in_proj와 out_proj 두 nn.Linear를 BitLinear로 교체한다. SSM 커널(Triton SISO, TileLang MIMO, CuteDSL step), RoPE 엔진, B·C에 대한 RMSNorm, 모든 편향 및 dt 매개변수는 변경하지 않는다. 130M 규모에서 70.9%의 매개변수가 ternary로 변환되며, 370M에서는 86.1%에 이른다(임베딩이 차지하는 비중이 줄어듦에 따라)."),
-    p("Mamba-3 LM 헤드 등록을 위해서는 state-spaces/mamba의 mixer_seq_simple.create_block 팩토리에 'Mamba3' 계층 식별자가 등록되어 있지 않으므로, 런타임에 create_block을 패치하여 Mamba-3 블록을 위치시킨다. 상류 코드는 수정하지 않는다."),
-    h2("3.3 INT4 PTQ 기준선"),
-    p("공정한 비교를 위해 FP 기준선뿐 아니라 4비트 PTQ 기준선을 함께 측정한다. 본 연구의 INT4 구현은 per-tensor 대칭 absmax 라운드-투-니어리스트(RTN)이며, 활성값은 양자화하지 않는다. 동일한 Mamba-3 130M FP 체크포인트에 사후 적용한 후 평가한다."),
+    p("본 절은 §1에서 제시한 두 가설(H1, H2)을 검증하기 위한 실험 설계를 기술한다. 핵심 설계 원칙은 두 가지이다. (a) 비교 대상 모델 간 학습 데이터·하이퍼파라미터·시드를 모두 동일화하여 단일 변수(아키텍처 또는 양자화 정밀도)만이 비교 결과의 차이를 설명하도록 한다. (b) 상류(state-spaces/mamba) Mamba-3 구현 자체는 수정하지 않고, 양자화는 가중치 격자만 교체하는 최소-변경 인터페이스로 적용하여 본 연구의 모든 결과가 상류 Mamba-3 알고리즘에 그대로 전이될 수 있도록 한다."),
+    h2("3.1 BitLinear: 1.58비트 가중치 + INT8 활성 양자화"),
+    p("BitLinear는 nn.Linear의 드롭-인 대체로서, 순전파 시 가중치를 1.58비트 삼진 격자에 라운드-트립하고 활성값을 토큰 별 INT8로 양자화한다. 학습 가중치는 부동소수점에 저장되어 임의의 FP 체크포인트와 호환되며, 학습 시 라운드 연산자에 대해 STE(straight-through estimator)로 기울기를 통과시킨다."),
+    p("본 연구의 BitLinear는 BitMamba-2 [7]의 JAX 구현을 PyTorch로 비트 단위 동등 이식한 결과이다. 이 선택의 합리성은 두 가지이다. 첫째, BitMamba-2가 동일 BitLinear 정의로 1B 규모까지 학습 안정성과 PPL 경쟁력을 입증하였으므로 본 연구는 변환된 결과를 직접 비교 대상에 포함시킬 수 있다. 둘째, BitNet b1.58 본 논문 [3]의 활성 INT8/가중치 ternary·per-tensor absmean·per-row absmax 정규화 절차를 그대로 따름으로써, 본 연구의 결과가 BitNet 계열 결과와 동일 척도에서 해석 가능하다."),
+    h2("3.2 BitMamba-3 모듈: 최소 변경 인터페이스"),
+    p("BitMamba-3는 state-spaces/mamba [6]의 Mamba3 클래스를 상속하여, 초기화 직후 in_proj·out_proj 두 nn.Linear만을 BitLinear로 교체한다. SSM 커널(Triton SISO, TileLang MIMO, CuteDSL step), RoPE 엔진, B·C에 대한 RMSNorm, 편향(dt_bias, A_log, B_bias, C_bias, D, mimo_x/z/o)은 모두 변경하지 않는다. 130M 규모에서 70.9%, 370M에서는 86.1%의 매개변수가 ternary로 변환된다(임베딩 비중이 모델 규모에 따라 감소)."),
+    p("이 최소-변경 설계의 합리성은 다음과 같다. 첫째, Mamba-3가 Mamba-2 대비 도입한 핵심 알고리즘 요소(RoPE 회귀, MIMO, B·C RMSNorm)는 모두 양자화 대상에서 제외되므로, 본 연구의 PPL·parity 결과 차이는 양자화 정밀도 변화에 명확히 귀속된다. 둘째, 상류 SSM 커널을 수정하지 않으므로 향후 Mamba-3의 공식 체크포인트 출시·커널 업데이트가 본 연구 결과에 자동으로 반영될 수 있다. 셋째, BitMamba-2의 in_proj·out_proj 양자화 전략과 일치하므로 동일 척도에서 아키텍처(Mamba-2 vs Mamba-3) 효과를 분리할 수 있다."),
+    p("Mamba-3 LM 헤드 등록을 위해서는 state-spaces/mamba의 mixer_seq_simple.create_block 팩토리에 'Mamba3' 계층 식별자가 아직 등록되어 있지 않으므로, 런타임에 create_block을 패치하여 Mamba-3 블록을 위치시킨다. 상류 코드는 수정하지 않는다."),
+    h2("3.3 INT4 PTQ 기준선: 현실적 비교 대상"),
+    p("FP16 기준선만으로는 본 양자화 기법의 실용성을 평가하기 어렵다. 실제 LLM 추론 환경에서 FP16은 대부분 INT4/INT8 PTQ로 대체되며, GPTQ [1]·AWQ [2]를 포함한 4비트 PTQ는 사실상 배포 표준이다. 따라서 본 연구는 FP 기준선뿐 아니라 INT4 PTQ 기준선을 함께 측정한다."),
+    p("본 연구의 INT4는 per-tensor 대칭 absmax 라운드-투-니어리스트(RTN)이며, 활성값은 양자화하지 않는다. 본 단순한 정의를 채택하는 이유는 두 가지이다. 첫째, GPTQ·AWQ와 같은 헤시안 기반·활성-인지 PTQ는 일반적으로 1–3% 더 낮은 PPL을 보이지만 보정 데이터·프레임워크 의존성이 크므로, 보편적 하한선(universal floor)으로서 RTN이 가장 공정한 비교 대상이다. 둘째, RTN은 본 연구의 ternary BitLinear와 같은 per-tensor 대칭 absmax 정규화를 사용하므로 정밀도(4비트 vs 1.58비트) 외 변수가 통제된다."),
     h2("3.4 RTX 5090 Blackwell 튜닝"),
-    p("Mamba-3 MIMO 후방 TileLang 커널은 d_state × chunk_size × mimo_rank에 비례하는 동적 공유 메모리를 요구하며, RTX 5090(SM 12.0, Blackwell)의 한계 약 123KB를 d_state=128·chunk=16·rank=4 기본값에서 초과한다. 또한 TileLang은 chunk_size ≥ 8을 강제한다. 이에 따라 본 연구는 130M·370M 사전 정의에서 d_state를 64로 축소하였다(chunk=8, rank=4 유지). 이는 알고리즘 변경이 아니라 하드웨어 종속적 커널 시작 매개변수 조정이며, 더 작은 batch×seqlen에서 d_state=128과의 수치적 동등성을 사전에 검증하였다."),
+    p("Mamba-3 MIMO 후방 TileLang 커널은 동적 공유 메모리를 d_state × chunk_size × mimo_rank에 비례하여 요구한다. RTX 5090(SM 12.0, Blackwell)의 한계는 약 123KB로, 상류 기본값(d_state=128·chunk=16·rank=4)을 초과한다. 또한 TileLang은 chunk_size ≥ 8을 강제한다. 이에 본 연구는 130M·370M 사전 정의에서 d_state를 64로 축소하였다(chunk=8, rank=4 유지). 이는 알고리즘 변경이 아니라 하드웨어 종속적 커널 시작 매개변수 조정이며, d_state=128과의 수치적 동등성을 더 작은 batch×seqlen에서 사전에 검증하였다."),
   ];
 }
 
@@ -323,15 +328,34 @@ function hardwareSection() {
 
 function discussion() {
   return [
-    h1("6. 한계 및 향후 연구"),
-    p("(i) 학습 토큰 예산이 480M으로 일반적 LLM 학습(수백 B)의 0.16% 수준이므로 절대 PPL은 published 130M Mamba-2 FP(300B 토큰, PPL 19.65)와는 직접 비교할 수 없으며, 본 논문의 모든 비교는 'matched 학습 예산' 하의 상대적 추세 진술에 한정된다. (ii) parity 결과는 d≤512의 작은 규모 합성 과제이며, 더 큰 규모와 자연어 다운스트림에서 동일 메커니즘이 유지되는지는 미해결 문제이다. (iii) RTL 측면에서 bit_mac만 비트-정확 검증을 마쳤고 나머지 5개 모듈은 FP16 IP 통합을 대기 중이다. (iv) Mamba-3의 1.5B 공개 체크포인트가 출시되면 사전학습 체크포인트로부터의 PTQ 또는 quantization-aware 미세조정과의 비교가 가능해질 것이다."),
+    h1("6. 논  의"),
+    h2("6.1 가설 H1 (양자화 비용) — 결과 해석"),
+    p("4.3절의 분해 결과는 ternary 양자화의 비용이 INT4 PTQ 대비 +8.2% PPL에 그침을 보였다. 일반적인 PTQ에서 4비트 → 2비트 전환은 10–20% 이상의 PPL 증가를 야기하지만, 본 연구의 from-scratch ternary 학습은 보정-기반 PTQ보다 효율적이다. 그 이유는 ternary 격자 자체에 학습 가중치가 적응(STE 기울기 + 활성 RMSNorm)하기 때문이며, 이는 BitNet b1.58 [3]이 3B 규모에서 보고한 'lossless' 결과와 본질적으로 동일한 메커니즘이다. 다만 본 연구는 학습 토큰 예산이 480M으로 작아 절대 PPL은 published Mamba-2 FP(300B 토큰)와 직접 비교할 수 없으며, 이는 6.4절에서 별도로 논의한다."),
+    h2("6.2 가설 H2 (귀납적 편향) — 메커니즘 가설"),
+    p("4.7절은 동일 모델·동일 학습·동일 시드 하에서 1.58비트 ternary가 4비트 INT4·16비트 FP가 풀지 못하는 parity 과제를 약 13σ 분리로 해결함을 보였다. 이 결과를 단순한 'low-bit 효과'로 설명할 수 있는지 INT4 통제 실험으로 직접 검증하였고, INT4(4비트, 16-값 격자)는 FP(연속체)와 통계적으로 구별되지 않는 무작위 수준에 머물렀다. 이는 본 귀납적 편향의 임계 정밀도가 1.58비트와 4비트 사이에 위치함을 시사한다."),
+    p("본 결과의 메커니즘 가설은 이산 격자의 'commitment' 효과이다. parity는 본질적으로 이산 함수(XOR)이며, 그 해는 가중치 공간에서 좁은 매니폴드에 국한된다. 16-값(INT4) 또는 연속체(FP) 격자에서는 학습이 parity와 무관한 부드러운 함수에 더 쉽게 수렴하지만, 3-값(ternary) 격자에서는 부드러운 근사가 표현 자체로 불가능하므로 학습은 XOR 구조로 강제 수렴된다고 해석할 수 있다. 단, 본 가설은 가능한 설명 중 하나이며 반증을 위해 더 큰 규모(d ≥ 1024) 및 자연어 상태 추적 과제로의 확장이 필요하다(6.4절)."),
+    h2("6.3 아키텍처(Mamba-3) vs 양자화의 상대적 중요도"),
+    p("4.3절은 동일 학습 예산 하에서 Mamba-2 → Mamba-3 변경(matched ternary)의 PPL 우위가 130M에서 −39%, 370M에서 −43%인 반면, FP → ternary 양자화 비용은 +12.2%에 그침을 보였다. 즉 본 학습 예산 하에서 가장 영향이 큰 단일 결정은 양자화 종류가 아닌 아키텍처 선택이며, 양자화는 그 위에 추가되는 작은 비용에 불과하다. 4.5절의 LAMBADA 결과(M2 130M PPL 6408 → M3 370M PPL 826, 7.75배)는 이를 더 극단적으로 드러내며, 4.6절의 Needle-in-Haystack에서 370M의 장거리 회상 능력 향상도 같은 추세에 부합한다."),
+    p("이 발견의 함의는 ternary 양자화의 가치가 'Mamba-3와 결합될 때' 가장 명확하다는 것이다. 단순 압축 측면에서는 INT4가 PPL 비용·메모리 측면에서 ternary보다 우세할 수 있지만(FPGA 곱셈기 자원이 충분한 경우), Mamba-3 + ternary 조합은 (i) 곱셈기 제거, (ii) 메모리 추가 절감, (iii) 상태 추적 귀납적 편향이라는 세 이득을 동시에 제공한다. 따라서 본 조합의 가장 적합한 대상은 LUT-rich·DSP-poor 엣지 FPGA(e.g. Zybo Z7-20, Kria KV260) 및 곱셈기 제거가 ASIC 면적·전력의 핵심 제약인 도메인이다."),
+    h2("6.4 미비점 분석 및 보완 방향"),
+    p("본 연구의 결과가 충분히 강하지 않은 지점은 다음과 같으며, 각각에 대해 보완 경로를 제시한다."),
+    p("(i) 절대 PPL — 학습 토큰 예산이 480M으로 일반적 LLM 학습(수백 B)의 0.16% 수준이므로, 본 연구의 모든 PPL은 published 모델과 직접 비교할 수 없다. Mamba-3 공식 1.5B 체크포인트가 출시될 경우 사전학습 가중치에서 출발한 quantization-aware 미세조정 또는 PTQ를 적용하면 절대 PPL을 INT4 PTQ에 가까운 수준까지 끌어올릴 수 있을 것으로 기대한다.", { firstLine: false }),
+    p("(ii) parity 규모 — 4.7절의 parity 결과는 d ≤ 512·depth ≤ 4의 작은 합성 과제이며, 자연어에서 상태 추적이 요구되는 다운스트림(예: 트랙 카운팅, 함수 호출 깊이 추론, 변수 바인딩 추적)에서 동일 메커니즘이 유지되는지는 미해결 문제이다. 향후 1.5B 규모에서 Mamba-3 공식 [6]이 보고한 100% parity 결과와 BitMamba-3의 동일 과제 결과를 비교함으로써 본 가설을 더 큰 규모에서 검증할 수 있다.", { firstLine: false }),
+    p("(iii) 4비트 PTQ 강도 — 본 연구의 INT4는 RTN로, GPTQ·AWQ와 같은 SOTA 4비트 PTQ보다 약 1–3% PPL이 높다. 따라서 4.3절의 +8.2% (INT4 → ternary) 격차는 SOTA 4비트 PTQ와 비교하면 +9–11%로 약간 확대될 가능성이 있다. 단, 본 결과의 핵심 비교는 'matched 정규화 절차 하의 정밀도 효과'이므로 RTN이 가장 통제된 비교 대상이다.", { firstLine: false }),
+    p("(iv) RTL 검증 — bit_mac 단일 모듈만 비트-정확 검증을 마쳤고, RoPE 엔진·RMSNorm·MIMO 선택적 스캔·MIMO 행렬 곱은 Xilinx FP16 IP 통합을 대기 중이다. Vivado 합성 결과(LUT/DSP/BRAM 사용량, 100MHz timing closure)와 PetaLinux 부팅 후 실측 throughput·에너지는 후속 연구의 대상이며, 본 논문은 알고리즘 측면 결과만을 다룬다.", { firstLine: false }),
   ];
+}
+
+function limitations() {
+  return [];
 }
 
 function conclusion() {
   return [
     h1("7. 결  론"),
-    p("본 논문은 BitMamba-3, 즉 Mamba-3 아키텍처에 1.58비트 삼진 양자화를 적용한 LLM을 제안하고, FP·INT4 PTQ 두 기준선과의 직접 비교를 통해 다음을 정량화하였다. (1) 양자화 비용은 INT4 대비 +8.2% PPL에 그쳐 메모리 2.5배·곱셈기 제거의 이득과 비교하면 합리적 거래이다. (2) Mamba-3 아키텍처는 동일한 1.58비트 양자화 하에서 Mamba-2 대비 1.64–1.76배의 언어 모델링 우위를 보인다. (3) 가장 강한 결과로, 1.58비트 이산 구조 자체가 상태 추적 과제에서 약 13σ 분리의 귀납적 편향으로 작용하며, 이는 4비트 PTQ에서는 관찰되지 않는다. 이상의 결과는 Mamba-3 + 1.58비트 양자화의 결합이 단순한 압축 기법이 아니라 알고리즘적·하드웨어적 의의를 동시에 갖는 설계 선택임을 시사한다."),
+    p("본 연구의 목적은 (H1) Mamba-3 + 1.58비트 삼진 양자화의 양자화 비용이 INT4 PTQ 기준선 대비 작은 PPL 손실에 그치며 메모리·하드웨어 이득이 명확함을, (H2) 1.58비트 이산 구조가 단순한 정밀도 감소를 넘는 귀납적 편향으로 작용함을 검증하는 것이었다. 이를 위해 Mamba-3의 in_proj·out_proj 선형 계층을 BitLinear로 교체하는 최소-변경 인터페이스를 구현하고, 동일 데이터·동일 설정 하에서 FP·INT4 PTQ·ternary·BitMamba-2 네 구성을 직접 비교하였다."),
+    p("핵심 결과로 (1) BitMamba-3 130M의 양자화 비용은 INT4 대비 +8.2% PPL에 그치며 메모리는 2.5배·곱셈기는 원천 제거된다(H1 지지). (2) 동일 양자화 하에서 Mamba-3 아키텍처는 Mamba-2 대비 130M에서 1.64배·370M에서 1.76배의 PPL 우위를 보이며, 양자화 비용을 압도하는 크기이다. (3) 가장 강한 결과로, 1.58비트 이산 구조 자체가 상태 추적 과제에서 약 13σ 분리의 귀납적 편향으로 작용하며, 이는 4비트 PTQ에서는 관찰되지 않음을 통제 실험으로 확인하였다(H2 강하게 지지). 임계 정밀도는 1.58비트와 4비트 사이에 위치한다."),
+    p("이상의 결과는 Mamba-3 + 1.58비트 양자화의 결합이 단순한 압축 기법이 아니라 알고리즘적·하드웨어적 의의를 동시에 갖는 설계 선택임을 시사한다. 후속 연구는 (i) Mamba-3 공식 1.5B 체크포인트로부터의 quantization-aware 미세조정 및 자연어 상태 추적 과제로의 확장, (ii) 본 연구의 RTL 모듈에 대한 Vivado 합성·timing closure·PetaLinux 기반 on-board throughput·에너지 측정, (iii) 4비트 SOTA PTQ(GPTQ/AWQ) 대비 비교를 통한 INT4 → ternary 격차의 보다 정밀한 정량화의 세 방향으로 진행될 수 있다."),
   ];
 }
 
@@ -377,6 +401,7 @@ const children = [
   ...experiments(),
   ...hardwareSection(),
   ...discussion(),
+  ...limitations(),
   ...conclusion(),
   new Paragraph({ children: [new PageBreak()] }),
   ...references(),
