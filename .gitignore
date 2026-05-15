@@ -38,5 +38,5 @@ desktop.ini
 # Logs
 *.log
 
-# Generated DOCX (paper output regenerated from paper/generate_paper.js)
+# Generated DOCX (not version-controlled)
 *.docx
