@@ -28,7 +28,7 @@ Mamba-3 `d_in_proj` is **larger** — more signals to produce per token.
 
 ### 2. Causal conv1d
 - Mamba-2: has `self.conv1d` (`nn.Conv1d`, depthwise, kernel_size=d_conv=4)
-- Mamba-3: **removed entirely** — simpler FPGA design
+- Mamba-3: **removed entirely** — one fewer projection path
 
 ### 3. A parameter
 - Mamba-2: static `self.A_log` parameter (nheads,)

@@ -60,17 +60,6 @@ Reason: Windows conda script inherits Windows PATH containing `(x86)` directorie
 - Email: gtbbknq2001@gmail.com
 - Git version: 2.51.2.windows.1
 
-## FPGA Tools
-
-- **Vivado**: Install path TBD (not found in expected locations)
-- **Prior Zybo artifacts** at `G:\Xilinx\`:
-  - `docs/edge_kv_accel/` — prior project session handoff docs (08 files)
-  - `petalinux_zybo/images_dot_hp/BOOT.BIN` — AXI HP DMA dot product baseline (preserved)
-  - `petalinux_zybo/images_gguf_q4_0/BOOT.BIN` — GGUF Q4_0 accelerator
-  - `petalinux_zybo/images_gguf_q8_0/BOOT.BIN` — GGUF Q8_0 accelerator
-  - `rtl/cores/` — Verilog modules, reusable for new BitMamba-3 RTL
-- **Zybo Z7-20 board**: Single unit (multi-board scope deferred)
-
 ## Dependencies To Add
 
 Packages to install into `taq-vidssm`:

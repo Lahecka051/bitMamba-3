@@ -25,25 +25,6 @@ results/**/wandb/
 *.npz
 *.parquet
 
-# FPGA / Vivado
-rtl/vivado_project/*/
-!rtl/vivado_project/.gitkeep
-*.jou
-*.log
-*.str
-*.backup*
-.Xil/
-rtl/bd/*.bd.bak
-*.xsa
-
-# Verilator
-sim/verilator/obj_dir/
-
-# PetaLinux images
-petalinux/**/BOOT.BIN
-petalinux/**/image.ub
-petalinux/**/*.elf
-
 # OS
 .DS_Store
 Thumbs.db

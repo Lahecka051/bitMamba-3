@@ -5,7 +5,7 @@ Last updated: 2026-04-25.
 ## Tentative Title
 
 **"BitMamba-3: 1.58-bit Ternary Quantization of Inference-First State Space
-Models for Energy-Efficient Edge Deployment"**
+Models, and Ternary Quantization as a State-Tracking Inductive Bias"**
 
 ## Core Claims (in order of strength)
 
@@ -49,24 +49,12 @@ Models for Energy-Efficient Edge Deployment"**
    `mimo_rank=4`, fits within Blackwell's budget without algorithmic
    change. (Demonstrated, documented.)
 
-7. **C7 — Single-board FPGA implementation feasibility**: 6 RTL modules
-   (`bit_mac`, `rope_engine`, `rmsnorm_int8`, `selective_scan_mimo`,
-   `mimo_matmul`, `top_bitmamba3_block`) targeting Zybo Z7-20 with AXI4-HP
-   DMA interface. `bit_mac` is functionally complete with 3-stage pipeline,
-   bit-exact verified against PyTorch reference (100 vectors). RoPE LUT
-   (1024-entry FP16 sin/cos) generated. RMSNorm + selective scan use FP16
-   IP placeholders pending integration. (Partial, RTL-level.)
-
-8. **C8 — Energy efficiency vs RTX 5090** (target, not yet measured): 8×
-   Zybo aggregate ≈ 40W TDP vs RTX 5090 450W. Tokens/sec/W projection
-   pending Zybo bring-up. (Future work.)
-
 ## Suggested Structure
 
 ### §1 Introduction
-- Motivation: edge LLM inference, energy efficiency, the BitNet b1.58 trend.
-- Contribution sketch: first PyTorch BitMamba-3 + first Zybo RTL design +
-  parity state-tracking analysis.
+- Motivation: efficient sequence modeling, the BitNet b1.58 low-bit trend.
+- Contribution sketch: first PyTorch BitMamba-3 + parity state-tracking
+  analysis (ternary as inductive bias).
 
 ### §2 Background
 - Mamba-2 vs Mamba-3 architectural differences (cite Mamba-3 paper, our
@@ -80,33 +68,28 @@ Models for Energy-Efficient Edge Deployment"**
   `out_proj`. Mamba-3 forward path / SSM kernels untouched.
 - §3.3 Mamba-3 LM head registration patch (runtime override).
 - §3.4 Blackwell shared-memory workaround (chunk_size=8 for mimo_rank=4).
-- §3.5 RTL design for Zybo Z7-20.
 
-### §4 Experiments — Software
+### §4 Experiments
 - §4.1 Setup: WSL Ubuntu-24.04, PyTorch 2.11+cu130, Mamba-2.3.1, RTX 5090.
   Data: fineweb-edu 1B tokens, GPT-NeoX tokenizer.
-- §4.2 Parity (state-tracking): full 18-run multi-seed table, finding 1+2+3+4.
-- §4.3 30M training curves: loss vs tokens, WikiText-103 PPL.
-- §4.4 130M training (planned).
-- §4.5 Ablations: ternarization scope, mimo_rank, rope_fraction.
+- §4.2 Parity (state-tracking): full multi-seed table, findings C2+C3+C4.
+- §4.3 30M/130M/370M training curves: loss vs tokens, WikiText-103 PPL.
+- §4.4 Zero-shot downstream (130M): lm-eval-harness suite.
+- §4.5 Long-context: needle-in-haystack and PG19 PPL.
+- §4.6 Ablations: ternarization scope, mimo_rank, rope_fraction.
 
-### §5 Experiments — Hardware
-- §5.1 RTL micro-architecture diagrams.
-- §5.2 Verilator bit-exact verification results.
-- §5.3 Vivado synthesis + Zybo Z7-20 utilization.
-- §5.4 PetaLinux bring-up + end-to-end FPGA inference.
-- §5.5 Throughput + energy measurements.
-
-### §6 Discussion
-- Honest limitations: tiny model scale; multi-seed variance; FPGA RTL
-  partly placeholder.
+### §5 Discussion
+- Honest limitations: tiny model scale; multi-seed variance; training-data
+  budget two orders of magnitude below standard corpora.
 - Mamba-3 public checkpoint pending — own training stops short of
   competitive PPL.
 
-### §7 Conclusion + Future Work
-- Multi-board scaling (8× Zybo cluster, deferred).
-- Bigger model scales (1B+).
-- ASIC area/energy projection.
+### §6 Conclusion + Future Work
+- Mamba-3 public checkpoints (when released): direct ternarization +
+  fine-tuning instead of from-scratch training.
+- Larger-scale parity ablations to firm up the inductive-bias claim.
+- Scaling the from-scratch training token budget toward the
+  Chinchilla-optimal regime.
 
 ## Bibliography Anchors
 
@@ -114,10 +97,6 @@ Models for Energy-Efficient Edge Deployment"**
 - Mamba-2: "Transformers are SSMs", ICML 2024.
 - BitNet b1.58: arXiv:2402.17764 (MS Research).
 - BitMamba-2: COLING 2025 / Zhayr1/BitMamba-2 GitHub.
-- TerEffic: arXiv:2502.16473 (FPGA ternary LLM, Alveo U280).
-- TeLLMe / TeLLMe v2: arXiv:2504.16266 / 2510.15926 (KV260 / edge FPGA).
-- LightMamba: arXiv:2502.15260 (FPGA Mamba 4-bit, Versal).
-- FastMamba: arXiv:2505.18975 (FPGA Mamba2 8-bit).
 
 ## What This Paper Is Not Claiming
 
@@ -125,13 +104,11 @@ Models for Energy-Efficient Edge Deployment"**
   pending.
 - Not claiming BitMamba-3 outperforms BitMamba-2 in absolute terms (need
   same-scale matched comparison, pending Mamba-3 public checkpoints).
-- Not claiming parity solution generalizes (2× seqlen accuracy is ~0.58).
-- Not claiming the FPGA is faster than RTX 5090 (it isn't and won't be).
-  Energy efficiency angle only.
+- Not claiming the parity solution generalizes (2× seqlen accuracy is ~0.58).
 
 ## Rough Submission Targets (no commitment)
 
-Algorithm + HW co-design venues that fit:
-- FCCM, FPL, FPGA (HW-focused, FPGA implementation valued)
-- MLSys (system-level co-design)
+Efficient-ML and systems venues that fit a software/algorithm contribution:
+- MLSys (system-level / algorithm co-design)
 - EMC² @ NeurIPS, ES-FoMo @ ICML (efficient ML workshops, lower bar)
+- General ML venues, given the state-tracking inductive-bias finding
