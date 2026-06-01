@@ -113,3 +113,7 @@ the repository root.
 
 See `docs/05_paper_outline.md` and `docs/06_paper_draft.md` for the working
 paper structure, and `results/tables/` for the consolidated result tables.
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE).
